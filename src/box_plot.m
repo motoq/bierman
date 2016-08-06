@@ -23,7 +23,7 @@ nmeas = size(r,2);
 srng = blen/10;
 
   % Tracker accuracy for plotting
-SigmaRng = [ srng*srng ];
+SigmaRng = srng*srng;
 W = SigmaRng^-1;
 
   % 3D solution
@@ -53,3 +53,4 @@ xlabel('X');
 ylabel('Y');
 zlabel('Z');
 title('Boxed Tracker Geometry');
+box on;

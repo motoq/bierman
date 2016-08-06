@@ -29,8 +29,8 @@ function [phat, SigmaP, itr] = box_locate(tkr_pos, y, W)
   nmeas = size(tkr_pos, 2);
 
   phat = [0.5 0.5 0.5]';
+  yc(nmeas) = 0;
   for itr = 1:maxitr
-    yc(nmeas) = 0;
     for ii = 1:nmeas
       sc = phat - tkr_pos(:,ii);
       yc(ii) = norm(sc);

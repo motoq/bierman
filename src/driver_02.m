@@ -33,7 +33,7 @@ nmeas2 = 100;                                % Sequential obs, static
 
   % Tracker accuracy
 srng = .05;
-vrng = [ srng*srng ];
+vrng = srng*srng;
 W = 1/vrng;
 Wsqrt = 1/srng;
 y(nmeas) = 0;

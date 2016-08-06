@@ -44,7 +44,7 @@ function [XX, YY, ZZ] = matrix3X3_points(A,N)
 %ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 %POSSIBILITY OF SUCH DAMAGE.
 %------------------------------------------------------------------------------
-[U D V] = svd(A);
+[~, D, V] = svd(A);
  
 %----------------------------------
 % generate the ellipsoid at (0,0,0)

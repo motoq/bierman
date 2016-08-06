@@ -36,12 +36,12 @@ nmeas2 = 100;                                % Sequential obs, static
 tkr2 = zeros(3,nmeas2);
 
 % Plot geometry
-[~, ~, ~] = box_plot(rho, tkr, blen);
+box_plot(rho, tkr, blen);
 view([70 20]);
 
   % Tracker accuracy
 srng = .05;
-vrng = [ srng*srng ];
+vrng = srng*srng;
 W = vrng^-1;         
 y(nmeas) = 0;
 y2(nmeas2) = 0;
