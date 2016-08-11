@@ -96,7 +96,7 @@ for jj = 1:ntest
     Ap = est_drng_dloc(tkr(:,itkr), phat_kf);    % Partials, [1x3]
     yc = norm(phat_kf - tkr(:,itkr));            % Computed observation, scalar
     r = y2(ii) - yc;                             % Predicted residual
-    [phat_kf, P] = update_kalman(phat_kf, P, Ap, r, Wsqrt);
+    [phat_kf, P] = est_upd_kalman(phat_kf, P, Ap, r, Wsqrt);
   end
   kf_time = kf_time + toc;
 
@@ -110,7 +110,7 @@ for jj = 1:ntest
     Ap = est_drng_dloc(tkr(:,itkr), phat_pt);
     yc = norm(phat_pt - tkr(:,itkr));
     r = y2(ii) - yc;
-    [phat_pt, S] = update_potter(phat_pt, S, Ap, r, Wsqrt);
+    [phat_pt, S] = est_upd_potter(phat_pt, S, Ap, r, Wsqrt);
   end
   pt_time = pt_time + toc;
 
@@ -124,7 +124,7 @@ for jj = 1:ntest
     Ap = est_drng_dloc(tkr(:,itkr), phat_ud);
     yc = norm(phat_ud - tkr(:,itkr));
     r = y2(ii) - yc;
-    [phat_ud, U, D] = update_ud(phat_ud, U, D, Ap, r, vrng);
+    [phat_ud, U, D] = est_upd_ud(phat_ud, U, D, Ap, r, vrng);
   end
   ud_time = ud_time + toc;
 

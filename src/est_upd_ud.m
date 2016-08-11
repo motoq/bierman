@@ -1,5 +1,5 @@
-function [x, U, D] = update_ud(x, U, D, Ap, z, r)
-% UPDATE_UD Updates the apriori estimate and covariance via U-D sequential
+function [x, U, D] = est_upd_ud(x, U, D, Ap, z, r)
+% EST_UPD_UD Updates the apriori estimate and covariance via U-D sequential
 % estimation given a single new observation.  The covariance P is input in
 % the decomposed form such that P = UDU' where U is a unit upper triangular
 % matrix and D is a diagonal matrix.
