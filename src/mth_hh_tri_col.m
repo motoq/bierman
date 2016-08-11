@@ -25,33 +25,34 @@ function [TA] = mth_hh_tri_col(A)
   u = zeros(1,m);
   a = zeros(1,m);
 
-    rssa = 0;
+  rssa = 0;
+  for ii = 1:m
+    rssa = rssa + A(ii,1)*A(ii,1);
+  end
+  rssa = sqrt(rssa);
+  s = -sign(A(1,1))*rssa;
+  TA(1,1) = s;
+
+    % Donesky
+  if n == 1
+    return;
+  end
+
+  u(1) = A(1,1) - s;
+  for ii = 2:m
+    u(ii) = A(ii,1);
+  end
+  beta = 1/(s*u(1));
+
+  for jj = 2:n
+    ua = 0;
     for ii = 1:m
-      rssa = rssa + A(ii,1)*A(ii,1);
+      ua = ua + u(ii)*A(ii,jj);
     end
-    rssa = sqrt(rssa);
-    s = -sign(A(1,1))*rssa;
-    TA(1,1) = s;
-
-    if n == 1
-      return;
+    gamma = beta * ua;
+    for ii = 1:m
+      a(ii) = A(ii,jj) + gamma*u(ii);
     end
-
-    u(1) = A(1,1) - s;
-    for ii = 2:m
-      u(ii) = A(ii,1);
-    end
-    beta = 1/(s*u(1));
-
-    for jj = 2:n
-      ua = 0;
-      for ii = 1:m
-        ua = ua + u(ii)*A(ii,jj);
-      end
-      gamma = beta * ua;
-      for ii = 1:m
-        a(ii) = A(ii,jj) + gamma*u(ii);
-      end
-    end
-    TA(:,2) = a;
+  end
+  TA(:,2) = a;
 
