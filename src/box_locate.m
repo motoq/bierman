@@ -40,7 +40,7 @@ function [phat, SigmaP, itr] = box_locate(tkr_pos, y, W)
     ApTWr = zeros(3,1);
       % Accumulate measurements
     for ii = 1:nmeas
-      Api = drng_dloc(tkr_pos(:,ii), phat);
+      Api = est_drng_dloc(tkr_pos(:,ii), phat);
       ApTWAp = ApTWAp + Api'*W*Api;
       ApTWr = ApTWr + Api'*W*r(ii);
     end

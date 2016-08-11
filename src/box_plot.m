@@ -29,7 +29,7 @@ W = SigmaRng^-1;
   % 3D solution
 ApTWAp = zeros(3);
 for ii = 1:nmeas
-  Api = drng_dloc(r(:,ii), rho);
+  Api = est_drng_dloc(r(:,ii), rho);
   ApTWAp = ApTWAp + Api'*W*Api;
 end
 SigmaP3D = ApTWAp^-1;

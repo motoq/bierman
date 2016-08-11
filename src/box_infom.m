@@ -26,7 +26,7 @@ function ApTWAp = box_infom(r, rho, W)
   nmeas = size(r,2);
   ApTWAp = zeros(3);
   for ii = 1:nmeas
-    Api = drng_dloc(r(:,ii), rho);
+    Api = est_drng_dloc(r(:,ii), rho);
     ApTWAp = ApTWAp + Api'*W*Api;
   end
 

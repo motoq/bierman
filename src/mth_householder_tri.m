@@ -1,5 +1,6 @@
-function [TA] = mth_hh_tri(A)
-% MTH_HH_TRI Triangularizes an [MxN] matrix via a Householder Transformation.
+function [TA] = mth_householder_tri(A)
+% MTH_HOUSEHOLDER_TRI Triangularizes an [MxN] matrix via the Householder
+% Transformation.
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew

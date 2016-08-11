@@ -1,7 +1,7 @@
-function A = drng_dloc(pos, loc)
-% DRNG_DLOC computes the partials of a range measurement w.r.t. a location
-% in Cartesian coordinates given a the position of a range only tracker and
-% a location
+function A = est_drng_dloc(pos, loc)
+% EST_DRNG_DLOC computes the partials of a range measurement w.r.t. a location
+% in Cartesian coordinates given a the position of a range only tracker and a
+% location
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew

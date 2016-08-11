@@ -51,7 +51,7 @@ function [phat, SigmaP] = box_update(phat0, P0, tkr_pos, y, W, mode)
     %       Mineola, NY, 1977.
     %
   yc = norm(phat0 - tkr_pos);                    % Computed observation, scalar
-  Ap = drng_dloc(tkr_pos, phat0);                % Partials, [1x3]
+  Ap = est_drng_dloc(tkr_pos, phat0);            % Partials, [1x3]
   r = y - yc;                                    % Predicted residual
     % Normalize, Covariance obs = I
   sw = sqrt(W);
@@ -87,7 +87,7 @@ function [phat, SigmaP] = box_update(phat0, P0, tkr_pos, y, W, mode)
     SigmaP = S*S';                               % Stabilized covariance update
   elseif strcmp('UD', mode)
     n = size(phat0,1);
-    a = drng_dloc(tkr_pos, phat0);               % Not using normalized obs
+    a = est_drng_dloc(tkr_pos, phat0);           % Not using normalized obs
     sig2 = 1/W;                                  % Variance
     U = mth_udut(P0);                            % Combined U-D
     b = zeros(1,n);

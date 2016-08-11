@@ -33,7 +33,7 @@ function [TA] = mth_hh_tri_col(A)
     s = -sign(A(1,1))*rssa;
     TA(1,1) = s;
 
-    if (n == 1)
+    if n == 1
       return;
     end
 
@@ -43,7 +43,7 @@ function [TA] = mth_hh_tri_col(A)
     end
     beta = 1/(s*u(1));
 
-    for jj = (2):n
+    for jj = 2:n
       ua = 0;
       for ii = 1:m
         ua = ua + u(ii)*A(ii,jj);
