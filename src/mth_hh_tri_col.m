@@ -1,7 +1,7 @@
 function [TA] = mth_hh_tri_col(A)
 % MTH_HH_TRI_COL Triangularizes the first column of an [MxN] matrix via a
-% Householder Transformation.  Call this function once per column to fully
-% triangularize a matrix.
+% Householder Transformation.  Call this function once per column (working
+% down row by row) to fully triangularize a matrix.
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew
@@ -25,6 +25,7 @@ function [TA] = mth_hh_tri_col(A)
   u = zeros(1,m);
   a = zeros(1,m);
 
+    % Diagonal
   rssa = 0;
   for ii = 1:m
     rssa = rssa + A(ii,1)*A(ii,1);
@@ -33,11 +34,12 @@ function [TA] = mth_hh_tri_col(A)
   s = -sign(A(1,1))*rssa;
   TA(1,1) = s;
 
-    % Donesky
+    % Donesky - column matrix - just compute the scalar along the "diagonal"
   if n == 1
     return;
   end
 
+    % Reflect about u
   u(1) = A(1,1) - s;
   for ii = 2:m
     u(ii) = A(ii,1);

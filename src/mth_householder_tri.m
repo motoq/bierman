@@ -1,4 +1,4 @@
-function [TA] = mth_householder_tri(A)
+function [A] = mth_householder_tri(A)
 % MTH_HOUSEHOLDER_TRI Triangularizes an [MxN] matrix via the Householder
 % Transformation.
 %
@@ -13,19 +13,18 @@ function [TA] = mth_householder_tri(A)
 % Inputs:
 %   A   [MxN] Matrix
 % Return:
-%   TA  Triangularized, [MxN] matrix.
+%   A  Triangularized, [MxN] matrix.
 %
 % Author:  Kurt Motekew    20160809
 % 
 
   [m, n] = size(A);
-  TA = zeros(m,n);
 
   for ii = 1:n
+      % Already processed last column - can't go farther
     if ii > m
       break;
     end
-    TA(ii:m,ii:n) = mth_hh_tri_col(A(ii:m,ii:n));
-    A = TA;
+    A(ii:m,ii:n) = mth_hh_tri_col(A(ii:m,ii:n));
   end
 
