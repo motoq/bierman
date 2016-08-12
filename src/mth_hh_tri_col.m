@@ -23,7 +23,6 @@ function [TA] = mth_hh_tri_col(A)
   TA = zeros(m,n);
 
   u = zeros(1,m);
-  a = zeros(1,m);
 
     % Diagonal
   rssa = 0;
@@ -47,6 +46,7 @@ function [TA] = mth_hh_tri_col(A)
   beta = 1/(s*u(1));
 
   for jj = 2:n
+    a = zeros(1,m);
     ua = 0;
     for ii = 1:m
       ua = ua + u(ii)*A(ii,jj);
@@ -55,6 +55,6 @@ function [TA] = mth_hh_tri_col(A)
     for ii = 1:m
       a(ii) = A(ii,jj) + gamma*u(ii);
     end
+    TA(:,jj) = a;
   end
-  TA(:,2) = a;
 

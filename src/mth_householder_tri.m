@@ -21,7 +21,7 @@ function [A] = mth_householder_tri(A)
   [m, n] = size(A);
 
   for ii = 1:n
-      % Already processed last column - can't go farther
+      % Already processed last row - can't go farther
     if ii > m
       break;
     end
