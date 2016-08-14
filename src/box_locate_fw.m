@@ -1,7 +1,9 @@
 function [phat, SigmaP, itr] = box_locate_fw(tkr_pos, y, W)
 % BOX_LOCATE_FW Geolocates a tracked object within a boxed volume given
 % range only tracker locations, measurements, and a measurement weighting
-% matrix.
+% matrix using a WLS solution.  Observation errors are not assumed to be
+% uncorrelated, leading to use of a full weighting matrix without the
+% measurement accumulation allowed with a block diagonal structure.
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew
@@ -13,15 +15,15 @@ function [phat, SigmaP, itr] = box_locate_fw(tkr_pos, y, W)
 %
 % Inputs:
 %   tkr_pos   A [3xM] matrix of M tracker locations
-%   y         Array of N distance measurements
-%   W         Range uncertianty weighting matrix, [NxN]
+%   y         Array of M distance measurements
+%   W         Range uncertianty weighting matrix, [MxM]
 %
 % Return:
 %   phat     Estimated location, [3x1]
 %   SigmaP   Location covariance, [3x3]
 %   itr      Number of iterations
 %
-% Kurt Motekew   2014/10/25
+% Kurt Motekew   2016/08/13
 %
   maxitr = 50;
   tol = .0000001;
@@ -31,6 +33,7 @@ function [phat, SigmaP, itr] = box_locate_fw(tkr_pos, y, W)
   phat = [0.5 0.5 0.5]';
   r = zeros(nmeas,1);
   Ap = zeros(nmeas, 3);
+    % Populate residual and partial derivative matrices
   for itr = 1:maxitr
     for ii = 1:nmeas
       sc = phat - tkr_pos(:,ii);

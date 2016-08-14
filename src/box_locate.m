@@ -12,8 +12,8 @@ function [phat, SigmaP, itr] = box_locate(tkr_pos, y, W)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   tkr_pos   A [3xN] matrix of N tracker locations
-%   y         Array of N distance measurements
+%   tkr_pos   A [3xM] matrix of N tracker locations
+%   y         Array of M distance measurements
 %   W         Range uncertianty weighting matrix, 1/sigma_range^2, scalar
 %
 % Return:

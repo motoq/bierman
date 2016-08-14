@@ -1,7 +1,7 @@
 function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
 % BOX_LOCATE_HH Geolocates a tracked object within a boxed volume given
 % range only tracker locations, measurements, and a measurement weighting
-% matrix.
+% matrix using Householder triangularization.
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew
@@ -13,15 +13,15 @@ function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
 %
 % Inputs:
 %   tkr_pos   A [3xM] matrix of M tracker locations
-%   y         Array of N distance measurements
-%   SqrtW     Square root of range uncertianty weighting matrix, [NxN]
+%   y         Array of M distance measurements
+%   SqrtW     Square root of range uncertianty weighting matrix, [MxM]
 %
 % Return:
 %   phat     Estimated location, [3x1]
 %   SigmaP   Location covariance, [3x3]
 %   itr      Number of iterations
 %
-% Kurt Motekew   2014/10/25
+% Kurt Motekew   2016/08/13
 %
   maxitr = 50;
   tol = .0000001;
@@ -32,22 +32,24 @@ function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
   r = zeros(nmeas,1);
   Ap = zeros(nmeas, 3);
   for itr = 1:maxitr
+      % Build residual and partials matrices
     for ii = 1:nmeas
       sc = phat - tkr_pos(:,ii);
       yc = norm(sc);
       r(ii) = y(ii) - yc;
       Ap(ii,:) = est_drng_dloc(tkr_pos(:,ii), phat);
     end
+      % Form information array and decompose for solution
     InfoArray = [SqrtW*Ap SqrtW*r];
     Rz = mth_householder_tri(InfoArray);
     R = Rz(1:3,1:3);
     z = Rz(1:3,4);
-    Rinv = R^-1;
-    dp = Rinv*z;
+    dp = mth_trisol(R, z);
     phat = phat + dp;
     if norm(dp) < tol
       break;
     end
+    Rinv = mth_triinv(R);
     SigmaP = Rinv*Rinv';
   end
 
