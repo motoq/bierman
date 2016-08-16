@@ -45,7 +45,7 @@ vrng = srng*srng;
 W = vrng^-1;         
 y(nmeas) = 0;
 y2(nmeas2) = 0;
-Y2ERR(nmeas+nmeas2,ntest) = 0;
+YERRS(nmeas+nmeas2,ntest) = 0;
 locs0 = zeros(3,ntest);
 testnum = 1:ntest;
 miss0 = zeros(1,ntest);
@@ -69,9 +69,9 @@ for jj = 1:ntest
     % Create synthetic measurements using error budget
   for ii = 1:nmeas
     s = rho - tkr(:,ii);
-    y2err = srng*randn;
-    y(ii) = norm(s) + y2err;
-    Y2ERR(ii,jj) = abs(y2err);
+    yerr = srng*randn;
+    y(ii) = norm(s) + yerr;
+    YERRS(ii,jj) = abs(yerr);
   end
     % Additional observations
   for ii = 1:nmeas2
@@ -81,9 +81,9 @@ for jj = 1:ntest
       itkr = nmeas;
     end
     s = rho - tkr(:,itkr);
-    y2err = srng*randn;
-    y2(ii) = norm(s) + y2err;
-    Y2ERR(ii+nmeas,jj) = abs(y2err);
+    yerr = srng*randn;
+    y2(ii) = norm(s) + yerr;
+    YERRS(ii+nmeas,jj) = abs(yerr);
   end
     % Estimate location using initial set of obs
   [phat0, SigmaP0, ~] = box_locate(tkr, y, W);
@@ -182,7 +182,7 @@ ylabel('RSS Miss Distance');
 legend('Init', 'Seq Batch', 'Full Batch', 'Kalman', 'Potter', 'U-D');
 
 figure; hold on;
-imagesc(Y2ERR);
+imagesc(YERRS);
 xlabel('Trial');
 ylabel('Obs#');
 title('Range Error');

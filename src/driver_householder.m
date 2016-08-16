@@ -48,10 +48,13 @@ SqrtW = sqrtm(W);
 y(nmeas) = 0;
 testnum = 1:ntest;
 miss_fw = zeros(1,ntest);
+miss_qr = zeros(1,ntest);
 miss_hh = zeros(1,ntest);
 contained_3d_fw = 0;
+contained_3d_qr = 0;
 contained_3d_hh = 0;
 fw_time = 0;
+qr_time = 0;
 hh_time = 0;
 
 %
@@ -72,33 +75,44 @@ for jj = 1:ntest
     y(ii) = norm(s) + yerr;
   end
     % Normal equations solution
-  [phat_fw, SigmaP_fw ~] = box_locate_fw(tkrs, y, W);
   tic;
+    [phat_fw, SigmaP_fw, ~] = box_locate_fw(tkrs, y, W);
+  fw_time = fw_time + toc;
   if (SF95_3D > mth_mahalanobis(rho, phat_fw, SigmaP_fw))
     contained_3d_fw = contained_3d_fw + 1;
   end
-  fw_time = fw_time + toc;
   miss_fw(jj) = norm(phat_fw - rho);
     %
   tic
-  [phat_hh, SigmaP_hh ~] = box_locate_hh(tkrs, y, SqrtW);
+    [phat_qr, SigmaP_qr, ~] = box_locate_qr(tkrs, y, SqrtW);
+  qr_time = qr_time + toc;
+  if (SF95_3D > mth_mahalanobis(rho, phat_qr, SigmaP_qr))
+    contained_3d_qr = contained_3d_qr + 1;
+  end
+  miss_qr(jj) = norm(phat_qr - rho);
+    %
+  tic
+    [phat_hh, SigmaP_hh, ~] = box_locate_hh(tkrs, y, SqrtW);
+  hh_time = hh_time + toc;
   if (SF95_3D > mth_mahalanobis(rho, phat_hh, SigmaP_hh))
     contained_3d_hh = contained_3d_hh + 1;
   end
-  hh_time = hh_time + toc;
   miss_hh(jj) = norm(phat_hh - rho);
 end
 p95_3d_fw = 100*contained_3d_fw/ntest;
+p95_3d_qr = 100*contained_3d_qr/ntest;
 p95_3d_hh = 100*contained_3d_hh/ntest;
 
 figure; hold on;
-plot(testnum, miss_fw, 'o', testnum, miss_hh, '*');
+plot(testnum, miss_fw, 'o', testnum, miss_qr, 's', testnum, miss_hh, '*');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('Full Batch', 'Householder');
+legend('Full Batch', 'QR', 'Householder');
 
 fprintf('\nFull batch containment: %1.1f', p95_3d_fw);
 fprintf(' in %1.4f seconds', fw_time);
+fprintf('\nQr containment: %1.1f', p95_3d_hh);
+fprintf(' in %1.4f seconds', qr_time);
 fprintf('\nHouseholder containment: %1.1f', p95_3d_hh);
 fprintf(' in %1.4f seconds', hh_time);
 

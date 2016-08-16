@@ -57,8 +57,8 @@ for jj = 1:ntest
     % Create synthetic measurements using error budget
   for ii = 1:nmeas
     s = rho - tkr(:,ii);
-    y2err = srng*randn;
-    y(ii) = norm(s) + y2err;
+    yerr = srng*randn;
+    y(ii) = norm(s) + yerr;
   end
     % Additional observations
   for ii = 1:nmeas2
@@ -68,8 +68,8 @@ for jj = 1:ntest
       itkr = nmeas;
     end
     s = rho - tkr(:,itkr);
-    y2err = srng*randn;
-    y2(ii) = norm(s) + y2err;
+    yerr = srng*randn;
+    y2(ii) = norm(s) + yerr;
   end
     % Estimate location using initial set of obs
   [phat0, SigmaP0, ~] = box_locate(tkr, y, W);
