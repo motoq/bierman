@@ -21,7 +21,7 @@ function [phat, SigmaP, itr] = box_locate_qr(tkr_pos, y, SqrtW)
 %   SigmaP   Location covariance, [3x3]
 %   itr      Number of iterations
 %
-% Kurt Motekew   2016/08/13
+% Kurt Motekew   2016/08/15
 %
   maxitr = 50;
   tol = .0000001;
@@ -47,7 +47,7 @@ function [phat, SigmaP, itr] = box_locate_qr(tkr_pos, y, SqrtW)
     if norm(dp) < tol
       break;
     end
-    Rinv = mth_triinv(R);
-    SigmaP = Rinv*Rinv';
   end
+  Rinv = mth_triinv(R);
+  SigmaP = Rinv*Rinv';
 

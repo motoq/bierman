@@ -49,7 +49,7 @@ function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
     if norm(dp) < tol
       break;
     end
-    Rinv = mth_triinv(R);
-    SigmaP = Rinv*Rinv';
   end
+  Rinv = mth_triinv(R);
+  SigmaP = Rinv*Rinv';
 
