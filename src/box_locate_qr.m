@@ -41,7 +41,8 @@ function [phat, SigmaP, itr] = box_locate_qr(tkr_pos, y, SqrtW)
     end
     Ap = SqrtW*Ap;
     r = SqrtW*r;
-    [Q, R] = qr(Ap, '0');
+    %[Q, R] = qr(Ap, '0');
+    [Q, R] = mth_qr(Ap);
     dp = mth_trisol(R, Q'*r);
     phat = phat + dp;
     if norm(dp) < tol
