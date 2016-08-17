@@ -1,4 +1,4 @@
-function [A] = mth_householder_tri(A)
+function [A] = mth_householder_tri(A, nc)
 % MTH_HOUSEHOLDER_TRI Triangularizes an [MxN] matrix via the Householder
 % Transformation.
 %
@@ -11,7 +11,11 @@ function [A] = mth_householder_tri(A)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   A   [MxN] Matrix
+%   A      [MxN] Matrix
+%   nc     Process the first N - nc columns.  Optional input - if 0 or
+%          not used, then every column is included in the triangularization
+%          process.  Note that for nc > 0, every column will still be
+%          modified.
 % Return:
 %   A  Triangularized, [MxN] matrix.
 %
@@ -19,10 +23,14 @@ function [A] = mth_householder_tri(A)
 % 
 
   [m, n] = size(A);
+  if nargin == 2
+    nmax = n - nc;
+  else
+    nmax = n;
+  end
 
-  for ii = 1:n
-      % Already processed last row - can't go farther
-    if ii > m
+  for ii = 1:nmax
+    if ii > m                % Already processed last row - can't go farther
       break;
     end
     A(ii:m,ii:n) = mth_hh_tri_col(A(ii:m,ii:n));

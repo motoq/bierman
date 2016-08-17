@@ -1,4 +1,4 @@
-function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
+function [phat, SigmaP, R, z, itr] = box_locate_hh(tkr_pos, y, SqrtW)
 % BOX_LOCATE_HH Geolocates a tracked object within a boxed volume given
 % range only tracker locations, measurements, and a measurement weighting
 % matrix using Householder triangularization.
@@ -19,6 +19,8 @@ function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
 % Return:
 %   phat     Estimated location, [3x1]
 %   SigmaP   Location covariance, [3x3]
+%   R
+%   z
 %   itr      Number of iterations
 %
 % Kurt Motekew   2016/08/13
@@ -41,7 +43,7 @@ function [phat, SigmaP, itr] = box_locate_hh(tkr_pos, y, SqrtW)
     end
       % Form information array and decompose for solution
     InfoArray = [SqrtW*Ap SqrtW*r];
-    Rz = mth_householder_tri(InfoArray);
+    Rz = mth_householder_tri(InfoArray, 1);
     R = Rz(1:3,1:3);
     z = Rz(1:3,4);
     dp = mth_trisol(R, z);
