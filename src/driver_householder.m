@@ -84,7 +84,7 @@ for jj = 1:ntest
   miss_fw(jj) = norm(phat_fw - rho);
     %
   tic
-    [phat_qr, SigmaP_qr, ~] = box_locate_qr(tkrs, y, SqrtW);
+    [phat_qr, SigmaP_qr, ~, ~, ~] = box_locate_qr(tkrs, y, SqrtW);
   qr_time = qr_time + toc;
   if (SF95_3D > mth_mahalanobis(rho, phat_qr, SigmaP_qr))
     contained_3d_qr = contained_3d_qr + 1;

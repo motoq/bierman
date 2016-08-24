@@ -1,4 +1,4 @@
-function [phat, SigmaP, itr] = box_locate_qr(tkr_pos, y, SqrtW)
+function [phat, SigmaP, R, qty,  itr] = box_locate_qr(tkr_pos, y, SqrtW)
 % BOX_LOCATE_QR Geolocates a tracked object within a boxed volume given
 % range only tracker locations, measurements, and a measurement weighting
 % matrix using QR decomposition.
@@ -41,9 +41,10 @@ function [phat, SigmaP, itr] = box_locate_qr(tkr_pos, y, SqrtW)
     end
     Ap = SqrtW*Ap;
     r = SqrtW*r;
-    %[Q, R] = qr(Ap, '0');
-    [Q, R] = mth_qr(Ap);
-    dp = mth_trisol(R, Q'*r);
+    [Q, R] = qr(Ap, '0');
+    %[Q, R] = mth_qr(Ap);
+    qty = Q'*r;
+    dp = mth_trisol(R, qty);
     phat = phat + dp;
     if norm(dp) < tol
       break;
@@ -51,4 +52,3 @@ function [phat, SigmaP, itr] = box_locate_qr(tkr_pos, y, SqrtW)
   end
   Rinv = mth_triinv(R);
   SigmaP = Rinv*Rinv';
-
