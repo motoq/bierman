@@ -95,10 +95,11 @@ for ii = (m+1):m2
   R = Rz(1:n,1:n);
   z = Rz(1:n,(n+1));
   phat = mth_trisol(R,z);
-%  for jj = 1:num
-%    yc(jj) = phat(1) + phat(2)*xc(jj) + phat(3)*exp(xc(jj));
-%  end
-%  plot(xc, yc, '.r');
+  % Need to fix 'legend' command if uncommenting
+  %for jj = 1:num
+  %  yc(jj) = phat(1) + phat(2)*xc(jj) + phat(3)*exp(xc(jj));
+  %end
+  %plot(xc, yc, '.r');
 end
   % Plot updated estimate
 for ii = 1:num
