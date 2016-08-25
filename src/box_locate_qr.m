@@ -41,8 +41,8 @@ function [phat, SigmaP, R, qty,  itr] = box_locate_qr(tkr_pos, y, SqrtW)
     end
     Ap = SqrtW*Ap;
     r = SqrtW*r;
-    [Q, R] = qr(Ap, '0');
-    %[Q, R] = mth_qr(Ap);
+    %[Q, R] = qr(Ap, '0');
+    [Q, R] = mth_qr(Ap);
     qty = Q'*r;
     dp = mth_trisol(R, qty);
     phat = phat + dp;

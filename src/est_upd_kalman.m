@@ -23,11 +23,12 @@ function [phat, SigmaP] = est_upd_kalman(phat0, P0, Ap, r, sw)
 %
 % Kurt Motekew   2016/08/04
 %
-    %
-    % Ref:  G. J. Bierman, Factorization Methods for
-    %       Discrete Sequential Estimation, Dover Publications, Inc.,
-    %       Mineola, NY, 1977.
-    %
+%
+% Ref:  G. J. Bierman, Factorization Methods for
+%       Discrete Sequential Estimation, Dover Publications, Inc.,
+%       Mineola, NY, 1977, pp. 28-30.
+%
+
     % Normalize, Covariance obs = I
   delta = sw*r;                                  % Scaled predicted residual
   Ap = sw*Ap;                                    % Scaled partials

@@ -21,6 +21,11 @@ function [UD] = mth_udut(P)
 %
 % Author:  Kurt Motekew    20160802
 % 
+% Ref:  G. J. Bierman, Factorization Methods for
+%       Discrete Sequential Estimation, Dover Publications, Inc.,
+%       Mineola, NY, 1977, p. 53.
+%
+
   n = size(P,2);
   UD = zeros(n);
   D = zeros(1,n);

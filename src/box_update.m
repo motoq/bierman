@@ -77,7 +77,7 @@ function [phat, SigmaP] = box_update(phat0, P0, tkr_pos, y, W, mode)
     v = Pbar*Ap';
     SigmaP = (Pbar - v*K') + K*K';               % Stabilized covariance update
   elseif strcmp('POTTER', mode)
-    [S0, ~] = sqrtm(P0);                         % Matrix square root
+    [S0, ~] = mth_sqrtm(P0);                     % Matrix square root
     vtrans = Ap*S0;                              % [1x3]
     sigma = 1/(vtrans*vtrans' +1);               % Predicted residual covariance
     K = S0*vtrans';                              % Kalman gain

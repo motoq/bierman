@@ -27,11 +27,12 @@ function [x, U, D] = est_upd_ud(x, U, D, Ap, z, r)
 %
 % Kurt Motekew   2016/08/03
 %
-    %
-    % Ref:  G. J. Bierman, Factorization Methods for
-    %       Discrete Sequential Estimation, Dover Publications, Inc.,
-    %       Mineola, NY, 1977.
-    %
+%
+% Ref:  G. J. Bierman, Factorization Methods for
+%       Discrete Sequential Estimation, Dover Publications, Inc.,
+%       Mineola, NY, 1977, pp. 100-102
+%
+
   n = size(x,1);                                 % Number of solve for
 
   a = U'*Ap';

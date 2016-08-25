@@ -78,7 +78,7 @@ for jj = 1:ntest
   phat_kf = phat0;
   P = SigmaP0;                                   % Kalman covariance
   phat_pt = phat0;
-  S = sqrtm(SigmaP0);                            % Potter covariance sqrt
+  S = mth_sqrtm(SigmaP0);                        % Potter covariance sqrt
   phat_ud = phat0;
   [U, D] = mth_udut2(SigmaP0);                   % U-D, SigmaP = UDU'
 
