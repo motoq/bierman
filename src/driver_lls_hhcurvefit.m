@@ -90,16 +90,8 @@ plot(xc, yc, '-r');
 
 sw = 1/sigma;
 for ii = (m+1):m2
-  Rz0 = [R z ; sw*[1 x(ii) exp(x(ii))] sw*y(ii,1) ];
-  Rz = mth_householder_tri(Rz0, 1);
-  R = Rz(1:n,1:n);
-  z = Rz(1:n,(n+1));
-  phat = mth_trisol(R,z);
-  % Need to fix 'legend' command if uncommenting
-  %for jj = 1:num
-  %  yc(jj) = phat(1) + phat(2)*xc(jj) + phat(3)*exp(xc(jj));
-  %end
-  %plot(xc, yc, '.r');
+  A = [1 x(ii) exp(x(ii))];
+  [phat, R, z] = est_upd_hhsrif([0 0 0]', R, z, A, y(ii,1), sw);
 end
   % Plot updated estimate
 for ii = 1:num

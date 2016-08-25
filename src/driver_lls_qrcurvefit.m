@@ -88,11 +88,8 @@ plot(xc, yc, '-r');
 
 sw = 1/sigma;
 for ii = (m+1):m2
-  A = [R ; sw*[1 x(ii) exp(x(ii))]];
-  z = [qty ; sw*y(ii,1)];
-  [Q, R] = mth_qr(A);
-  qty = Q'*z;
-  phat = mth_trisol(R, qty);
+  A = [1 x(ii) exp(x(ii))];
+  [phat, R, qty] = est_upd_qrsrif([0 0 0]', R, qty, A, y(ii,1), sw);
 end
   % Plot updated estimate
 for ii = 1:num
