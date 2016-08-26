@@ -23,10 +23,9 @@ function [Q, R] = mth_qr(A)
 % Author:  Kurt Motekew    20160816
 % 
 
-  [m, n] = size(A);
+  [~, n] = size(A);
   R = zeros(n);
   Q = A;
-  qj = zeros(m,1);
   for kk = 1:n
     qk = Q(:,kk);
     rkk = norm(qk);
