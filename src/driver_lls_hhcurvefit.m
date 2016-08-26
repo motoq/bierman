@@ -91,7 +91,7 @@ plot(xc, yc, '-r');
 sw = 1/sigma;
 for ii = (m+1):m2
   A = [1 x(ii) exp(x(ii))];
-  [phat, R, z] = est_upd_hhsrif([0 0 0]', R, z, A, y(ii,1), sw);
+  [phat, R, z] = est_upd_hhsrif(R, z, A, y(ii,1), sw);
 end
   % Plot updated estimate
 for ii = 1:num
