@@ -1,4 +1,4 @@
-function [phat, R, z] = est_upd_hhsrif(R0, z0,  Ap, r, sw)
+function [xhat, Rhat, zhat] = est_upd_hhsrif(R0, z0, A, z, sw)
 % EST_UPD_HHSRIF Updates the apriori estimate and covariance via a SRIF
 % using Householder triangularization given a single new observation
 %
@@ -13,15 +13,15 @@ function [phat, R, z] = est_upd_hhsrif(R0, z0,  Ap, r, sw)
 % Inputs:
 %   R0        A priori partials component of triangularized information array,
 %             [NxN]
-%   z         A priori obs portion of triangularized info arry, [Nx1]
-%   Ap        Partial of obs w.r.t. current estimate, [1xN]
-%   r         Observation residual, scalar
+%   z0        A priori obs portion of triangularized info arry, [Nx1]
+%   A         Partial of obs w.r.t. current estimate, [1xN]
+%   z         Observation, scalar
 %   sw        Inverse of observation uncertainty, 1/sigma, scalar
 %
 % Return:
-%   phat     Updated estimated, [Nx1]
-%   R        Updated R0, [NxN]
-%   z        Updated z0, [Nx1]
+%   xhat     Updated estimated, [Nx1]
+%   Rhat     Updated R0, [NxN]
+%   zhat     Updated z0, [Nx1]
 %
 % Kurt Motekew   2016/08/11
 %
@@ -32,11 +32,11 @@ function [phat, R, z] = est_upd_hhsrif(R0, z0,  Ap, r, sw)
 %
 
     % Normalize when forming info array, Covariance obs = I
-  R_z = [ R0 z0 ; sw*Ap sw*r ];
+  R_z = [ R0 z0 ; sw*A sw*z ];
   R_z_hat = mth_householder_tri(R_z, 1);
 
   n = size(z0,1);
-  R = R_z_hat(1:n,1:n);
-  z = R_z_hat(1:n,(n+1));
+  Rhat = R_z_hat(1:n,1:n);
+  zhat = R_z_hat(1:n,(n+1));
   
-  phat = mth_trisol(R, z);
+  xhat = mth_trisol(Rhat, zhat);

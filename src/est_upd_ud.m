@@ -1,4 +1,4 @@
-function [x, U, D] = est_upd_ud(x, U, D, Ap, z, r)
+function [x, U, D] = est_upd_ud(x, U, D, a, delta, r)
 % EST_UPD_UD Updates the apriori estimate and covariance via U-D sequential
 % estimation given a single new observation.  The covariance P is input in
 % the decomposed form such that P = UDU' where U is a unit upper triangular
@@ -16,8 +16,8 @@ function [x, U, D] = est_upd_ud(x, U, D, Ap, z, r)
 %   x         A priori estimate, [Nx1]
 %   U         A priori U matrix, [NxN]
 %   D         A priori D matrix, [NxN]
-%   Ap        Partial of obs w.r.t. x, [1xN]
-%   z         Observation residual, scalar
+%   a         Partial of obs w.r.t. x, [1xN]
+%   delta     Observation residual, scalar
 %   r         Observation variance, sigma^2, scalar
 %
 % Return:
@@ -35,7 +35,7 @@ function [x, U, D] = est_upd_ud(x, U, D, Ap, z, r)
 
   n = size(x,1);                                 % Number of solve for
 
-  a = U'*Ap';
+  a = U'*a';
   b = D*U'*a;
   
   alpha = r + b(1)*a(1);
@@ -54,4 +54,4 @@ function [x, U, D] = est_upd_ud(x, U, D, Ap, z, r)
       b(ii) = b(ii) + b(jj)*beta;
     end
   end
-  x = x + b*z*gamma;
+  x = x + b*delta*gamma;

@@ -1,4 +1,4 @@
-function [phat, R, qty] = est_upd_qrsrif(R0, qty0,  Ap, r, sw)
+function [x, R, qty] = est_upd_qrsrif(R, qty, A, z, sw)
 % EST_UPD_QRSRIF Updates the apriori estimate and covariance via a SRIF
 % using QR decomposition given a single new observation
 %
@@ -11,25 +11,25 @@ function [phat, R, qty] = est_upd_qrsrif(R0, qty0,  Ap, r, sw)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   R0        A priori partials component of triangularized information array,
+%   R         R portion of QR decomposition performed on a priori A matrix,
 %             [NxN]
-%   z         A priori obs portion of triangularized info arry, [Nx1]
-%   Ap        Partial of obs w.r.t. current estimate, [1xN]
-%   r         Observation residual, scalar
+%   qty       A priori Q*z, with Q portion of QR decomposition performed on
+%             a priori A matrix, [Nx1]
+%   A         A priori partial of obs w.r.t. current estimate, [1xN]
+%   z         Observation, scalar
 %   sw        Inverse of observation uncertainty, 1/sigma, scalar
 %
 % Return:
-%   phat     Updated estimated, [Nx1]
-%   R        Updated R0, [NxN]
-%   z        Updated z0, [Nx1]
+%   x        Updated estimated, [Nx1]
+%   R        Updated R, [NxN]
+%   qty      Updated qty, [Nx1]
 %
 % Kurt Motekew   2016/08/11
 %
 
-  A = [R0 ; sw*Ap];
-  y  = [qty0 ; sw*r];
+  A = [R ; sw*A];
+  y  = [qty ; sw*z];
 
-  %[Q, R] = qr(A, '0');
   [Q, R] = mth_qr(A);
   qty = Q'*y;
-  phat = mth_trisol(R, qty);
+  x = mth_trisol(R, qty);

@@ -1,4 +1,4 @@
-function [phat, S] = est_upd_potter(phat0, S0, Ap, r, sw)
+function [x, S] = est_upd_potter(x, S, A, delta, sw)
 % EST_UPD_POTTER Updates the apriori estimate and covariance via the Potter
 % mechanization of the Kalman filter given a single new observation.
 %
@@ -11,14 +11,14 @@ function [phat, S] = est_upd_potter(phat0, S0, Ap, r, sw)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   phat0     A priori estimate, [Nx1]
-%   S0        A priori estimate covariance square root (P = SS'), [NxN]
-%   Ap        Partial of obs w.r.t. phat0, [1xN]
-%   r         Observation residual, scalar
+%   x         A priori estimate, [Nx1]
+%   S         A priori estimate covariance square root (P = SS'), [NxN]
+%   A         Partial of obs w.r.t. x, [1xN]
+%   delta     Observation residual, scalar
 %   sw        Inverse of observation uncertainty, 1/sigma, scalar
 %
 % Return:
-%   phat     Updated estimated, [Nx1]
+%   x        Updated estimated, [Nx1]
 %   S        Updated covariance square root (P = SS'), [NxN]
 %
 % Kurt Motekew   2016/08/04
@@ -30,12 +30,12 @@ function [phat, S] = est_upd_potter(phat0, S0, Ap, r, sw)
 %
 
     % Normalize, Covariance obs = I
-  delta = sw*r;                                  % Scaled predicted residual
-  Ap = sw*Ap;                                    % Scaled partials
+  delta = sw*delta;                              % Scaled predicted residual
+  A = sw*A;                                      % Scaled partials
   
-  vtrans = Ap*S0;                                % [1xN]
+  vtrans = A*S;                                  % [1xN]
   sigma = 1/(vtrans*vtrans' +1);                 % Predicted residual covariance
-  K = S0*vtrans';                                % Kalman gain
-  phat = phat0 + K*(delta*sigma);                % State update
+  K = S*vtrans';                                 % Kalman gain
+  x = x + K*(delta*sigma);                       % State update
   lambda = sigma/(1 + sqrt(sigma));
-  S = S0 - (lambda*K)*vtrans;                    % Stabilized covariance update
+  S = S - (lambda*K)*vtrans;                     % Stabilized covariance update

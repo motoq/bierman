@@ -1,4 +1,4 @@
-function [phat, SigmaP] = est_upd_kalman(phat0, P0, Ap, r, sw)
+function [x, P] = est_upd_kalman(x, P, A, delta, sw)
 % EST_UPD_KALMAN Updates the apriori estimate and covariance via a stabilized
 % Kalman filter given a single new observation.
 %
@@ -11,15 +11,15 @@ function [phat, SigmaP] = est_upd_kalman(phat0, P0, Ap, r, sw)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   phat0     A priori estimate, [Nx1]
-%   P0        A priori estimate covariance, [NxN]
-%   Ap        Partial of obs w.r.t. solve phat0, [1xN]
-%   r         Observation residual, scalar
+%   x         A priori estimate, [Nx1]
+%   P         A priori estimate covariance, [NxN]
+%   A         Partial of obs w.r.t. solve x, [1xN]
+%   delta     Observation residual, scalar
 %   sw        Inverse of observation uncertainty, 1/sigma, scalar
 %
 % Return:
-%   phat     Updated estimated, [Nx1]
-%   SigmaP   Updated covariance, [NxN]
+%   x        Updated estimated, [Nx1]
+%   P        Updated covariance, [NxN]
 %
 % Kurt Motekew   2016/08/04
 %
@@ -30,13 +30,13 @@ function [phat, SigmaP] = est_upd_kalman(phat0, P0, Ap, r, sw)
 %
 
     % Normalize, Covariance obs = I
-  delta = sw*r;                                  % Scaled predicted residual
-  Ap = sw*Ap;                                    % Scaled partials
+  delta = sw*delta;                              % Scaled predicted residual
+  A = sw*A;                                      % Scaled partials
   
-  v = P0*Ap';
-  sigma = Ap*v +1;                               % Predicted residual covariance
+  v = P*A';
+  sigma = A*v + 1;                               % Predicted residual covariance
   K = v/sigma;                                   % Kalman gain
-  phat = phat0 + K*delta;                        % State update
-  Pbar = P0 - K*v';                              % Optimal covariance update
-  v = Pbar*Ap';
-  SigmaP = (Pbar - v*K') + K*K';                 % Stabilized covariance update
+  x = x + K*delta;                               % State update
+  P = P - K*v';                                  % Optimal covariance update
+  v = P*A';
+  P = (P - v*K') + K*K';                         % Stabilized covariance update
