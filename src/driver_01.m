@@ -21,22 +21,22 @@ k2_3d = SF95_3D*SF95_3D;
 
   % INPUTS
 ntest = 20;
-  % Target location
+  % True location of object to be located
 rho = [0.25 0.25 0]';
   % Tracker locations
 blen = 1;
-tkr = [
-        0       0       blen ;
-        blen    0       blen ;
-        blen    blen    blen ;
-        0       blen    blen
+tkrs = [
+         0       0       blen ;
+         blen    0       blen ;
+         blen    blen    blen ;
+         0       blen    blen
       ]';
-nmeas = size(tkr,2);                        % Batch init
+nmeas = size(tkrs,2);                        % Batch init
 nmeas2 = 100;                                % Sequential obs, static
-tkr2 = zeros(3,nmeas2);
+tkrs2 = zeros(3,nmeas2);
 
 % Plot geometry
-box_plot(rho, tkr, blen);
+box_plot(rho, tkrs, blen);
 view([70 20]);
 
   % Tracker accuracy
@@ -68,7 +68,7 @@ contained_3d_ud = 0;
 for jj = 1:ntest
     % Create synthetic measurements using error budget
   for ii = 1:nmeas
-    s = rho - tkr(:,ii);
+    s = rho - tkrs(:,ii);
     yerr = srng*randn;
     y(ii) = norm(s) + yerr;
     YERRS(ii,jj) = abs(yerr);
@@ -80,13 +80,13 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    s = rho - tkr(:,itkr);
+    s = rho - tkrs(:,itkr);
     yerr = srng*randn;
     y2(ii) = norm(s) + yerr;
     YERRS(ii+nmeas,jj) = abs(yerr);
   end
     % Estimate location using initial set of obs
-  [phat0, SigmaP0, ~] = box_locate(tkr, y, W);
+  [phat0, SigmaP0, ~] = box_locate(tkrs, y, W);
   locs0(:,jj) = phat0;
   if (SF95_3D > mth_mahalanobis(rho, phat0, SigmaP0))
     contained_3d0 = contained_3d0 + 1;
@@ -108,18 +108,18 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    tkr2(:,ii) = tkr(:,itkr);
+    tkrs2(:,ii) = tkrs(:,itkr);
     [phat_sb, SigmaP_sb] = box_update(phat_sb, SigmaP_sb,...
-                                      tkr2(:,ii), y2(ii), W,...
+                                      tkrs2(:,ii), y2(ii), W,...
                                       'SEQBATCH');
     [phat_kf, SigmaP_kf] = box_update(phat_kf, SigmaP_kf,...
-                                      tkr2(:,ii), y2(ii), W,...
+                                      tkrs2(:,ii), y2(ii), W,...
                                       'KALMAN');
     [phat_pt, SigmaP_pt] = box_update(phat_pt, SigmaP_pt,...
-                                      tkr2(:,ii), y2(ii), W,...
+                                      tkrs2(:,ii), y2(ii), W,...
                                       'POTTER');
     [phat_ud, SigmaP_ud] = box_update(phat_ud, SigmaP_ud,...
-                                      tkr2(:,ii), y2(ii), W, 'UD');
+                                      tkrs2(:,ii), y2(ii), W, 'UD');
   end
 
     % Get containment stats for each
@@ -140,7 +140,7 @@ for jj = 1:ntest
   end
   miss_ud(jj) = norm(phat_ud - rho);
 
-  [phat_fb, SigmaP_fb, ~] = box_locate([tkr tkr2], [y y2], W);
+  [phat_fb, SigmaP_fb, ~] = box_locate([tkrs tkrs2], [y y2], W);
   if (SF95_3D > mth_mahalanobis(rho, phat_fb, SigmaP_fb))
     contained_3d_fb = contained_3d_fb + 1;
   end
@@ -155,7 +155,7 @@ p95_3d_ud = 100*contained_3d_ud/ntest;
 p95_3d0s = sprintf('%4.1f%%', 100*contained_3d0/ntest);
 
   % 3D covariance
-ApTWAp = box_infom(tkr, rho, W);
+ApTWAp = box_infom(tkrs, rho, W);
 SigmaP = ApTWAp^-1;
   % 95% Covariance
 SigmaP3D = k2_3d*SigmaP;

@@ -20,22 +20,22 @@ k2_3d = SF95_3D*SF95_3D;
 
   % INPUTS
 ntest = 200;
-  % Target location
+  % True location of object to be located
 rho = [0.25 0.25 0]';
   % Tracker locations
 blen = 1;
-tkr = [
-        0       0       blen ;
-        blen    0       blen ;
-        blen    blen    blen ;
-        0       blen    blen
+tkrs = [
+         0       0       blen ;
+         blen    0       blen ;
+         blen    blen    blen ;
+         0       blen    blen
       ]';
-ntkr = size(tkr,2);
+ntkrs = size(tkrs,2);
 nmeas = 10;
-tkrs = zeros(3,nmeas);
+tkrs2 = zeros(3,nmeas);
 
 % Plot geometry
-box_plot(rho, tkr, blen);
+box_plot(rho, tkrs, blen);
 view([70 20]);
 
   % Tracker accuracy
@@ -65,18 +65,18 @@ for jj = 1:ntest
     % Create synthetic measurements using error budget
   for ii = 1:nmeas
       % Determine which tracker to get the obs from
-    itkr = mod(ii,ntkr);
+    itkr = mod(ii,ntkrs);
     if itkr == 0
-      itkr = ntkr;
+      itkr = ntkrs;
     end
-    tkrs(:,ii) = tkr(:,itkr);
-    s = rho - tkrs(:,ii);
+    tkrs2(:,ii) = tkrs(:,itkr);
+    s = rho - tkrs2(:,ii);
     yerr = srng*randn;
     y(ii) = norm(s) + yerr;
   end
     % Normal equations solution
   tic;
-    [phat_fw, SigmaP_fw, ~] = box_locate_fw(tkrs, y, W);
+    [phat_fw, SigmaP_fw, ~] = box_locate_fw(tkrs2, y, W);
   fw_time = fw_time + toc;
   if (SF95_3D > mth_mahalanobis(rho, phat_fw, SigmaP_fw))
     contained_3d_fw = contained_3d_fw + 1;
@@ -84,7 +84,7 @@ for jj = 1:ntest
   miss_fw(jj) = norm(phat_fw - rho);
     %
   tic
-    [phat_qr, SigmaP_qr, ~, ~, ~] = box_locate_qr(tkrs, y, SqrtW);
+    [phat_qr, SigmaP_qr, ~, ~, ~] = box_locate_qr(tkrs2, y, SqrtW);
   qr_time = qr_time + toc;
   if (SF95_3D > mth_mahalanobis(rho, phat_qr, SigmaP_qr))
     contained_3d_qr = contained_3d_qr + 1;
@@ -92,7 +92,7 @@ for jj = 1:ntest
   miss_qr(jj) = norm(phat_qr - rho);
     %
   tic
-    [phat_hh, SigmaP_hh, ~, ~, ~] = box_locate_hh(tkrs, y, SqrtW);
+    [phat_hh, SigmaP_hh, ~, ~, ~] = box_locate_hh(tkrs2, y, SqrtW);
   hh_time = hh_time + toc;
   if (SF95_3D > mth_mahalanobis(rho, phat_hh, SigmaP_hh))
     contained_3d_hh = contained_3d_hh + 1;

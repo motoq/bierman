@@ -18,17 +18,17 @@ k2_3d = SF95_3D*SF95_3D;
 
   % INPUTS
 ntest = 20;
-  % Target location
+  % True location of object to be located
 rho = [0.25 0.25 0]';
   % Tracker locations
 blen = 1;
-tkr = [
-        0       0       blen ;
-        blen    0       blen ;
-        blen    blen    blen ;
-        0       blen    blen
+tkrs = [
+         0       0       blen ;
+         blen    0       blen ;
+         blen    blen    blen ;
+         0       blen    blen
       ]';
-nmeas = size(tkr,2);                        % Batch init
+nmeas = size(tkrs,2);                        % Batch init
 nmeas2 = 100;                                % Sequential obs, static
 
   % Tracker accuracy
@@ -56,7 +56,7 @@ ud_time = 0;
 for jj = 1:ntest
     % Create synthetic measurements using error budget
   for ii = 1:nmeas
-    s = rho - tkr(:,ii);
+    s = rho - tkrs(:,ii);
     yerr = srng*randn;
     y(ii) = norm(s) + yerr;
   end
@@ -67,12 +67,12 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    s = rho - tkr(:,itkr);
+    s = rho - tkrs(:,itkr);
     yerr = srng*randn;
     y2(ii) = norm(s) + yerr;
   end
     % Estimate location using initial set of obs
-  [phat0, SigmaP0, ~] = box_locate(tkr, y, W);
+  [phat0, SigmaP0, ~] = box_locate(tkrs, y, W);
 
     % Sequential estimation based on initial estimate
   phat_kf = phat0;
@@ -93,8 +93,8 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkr(:,itkr), phat_kf);    % Partials, [1x3]
-    yc = norm(phat_kf - tkr(:,itkr));            % Computed observation, scalar
+    Ap = est_drng_dloc(tkrs(:,itkr), phat_kf);    % Partials, [1x3]
+    yc = norm(phat_kf - tkrs(:,itkr));            % Computed observation, scalar
     r = y2(ii) - yc;                             % Predicted residual
     [phat_kf, P] = est_upd_kalman(phat_kf, P, Ap, r, Wsqrt);
   end
@@ -107,8 +107,8 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkr(:,itkr), phat_pt);
-    yc = norm(phat_pt - tkr(:,itkr));
+    Ap = est_drng_dloc(tkrs(:,itkr), phat_pt);
+    yc = norm(phat_pt - tkrs(:,itkr));
     r = y2(ii) - yc;
     [phat_pt, S] = est_upd_potter(phat_pt, S, Ap, r, Wsqrt);
   end
@@ -121,8 +121,8 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkr(:,itkr), phat_ud);
-    yc = norm(phat_ud - tkr(:,itkr));
+    Ap = est_drng_dloc(tkrs(:,itkr), phat_ud);
+    yc = norm(phat_ud - tkrs(:,itkr));
     r = y2(ii) - yc;
     [phat_ud, U, D] = est_upd_ud(phat_ud, U, D, Ap, r, vrng);
   end
