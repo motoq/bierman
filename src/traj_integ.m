@@ -1,4 +1,4 @@
-function [t, rhos, vels] = traj_integ(t0, dt, tf, rho0, vel0)
+function [t, x] = traj_integ(t0, dt, tf, x0)
 % TRAJ_INTEG computes a ballistic trajectory with drag effects given initial
 % position and velocity using the differential equations supplied by
 % traj_dxdt using RK4 numeric integration:
@@ -17,37 +17,22 @@ function [t, rhos, vels] = traj_integ(t0, dt, tf, rho0, vel0)
 %   t0     Trajectory start time
 %   dt     Time step at which to output state vectors
 %   tf     Trajectory end time
-%   rho0   Initial position, [3x1]
-%   vel0   Initial velocity, [3x1]
+%   x0     Initial position and velocity, [6x1]
 %
 % Return
-%   t      Array of times associated with each position, [1xN]
-%   rhos   Positions as a function of time, [3xN]
-%   vels   Velocities as a function of time, [3xN]
+%   t   Array of times associated with each position, [1xN]
+%   x   Position and velocity as a function of time, [6xN]
 %
 % Kurt Motekew   2014/11/06
 %
   t = t0:dt:tf;
   ntimes = size(t,2);
-  rhos = zeros(3,ntimes);
-  vels = zeros(3,ntimes);
-  rhos(:,1) = rho0;
-  vels(:,1) = vel0;
-  rho = rho0;
-  vel = vel0;
+  x = zeros(6,ntimes);
+  x(1:6,1) = x0;
   for ii = 2:ntimes
-    [~, xx] = mth_rk4(@traj_dxdt, t(ii), dt, [ rho' vel' ]');
-    rho = xx(1:3, 1);
-    vel = xx(4:6, 1);
-    if rho(3,1) < 0
-      ntimes = ii-1;
-      rhos = rhos(:,1:ntimes);
-      vels = vels(:,1:ntimes);
-      t = t(1:ntimes);
+    [~, x(:,ii)] = mth_rk4(@traj_dxdt, t(ii-1), dt, x(:,ii-1));
+    if x(3,ii) < 0
       break;
-    else
-      rhos(:,ii) = rho;
-      vels(:,ii) = vel;
     end
   end
   

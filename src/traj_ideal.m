@@ -20,7 +20,7 @@ function [t, x] = traj_ideal(t0, dt, tf, x0)
 %    
 % Return
 %   t      Array of times associated with each position, [1xN]
-%   x      Position and velocity vectors as a function of time, [3xN]
+%   x      Position and velocity vectors as a function of time, [6xN]
 %
 % Kurt Motekew   2014/11/06
 %

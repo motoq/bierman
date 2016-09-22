@@ -1,4 +1,4 @@
-function [newt, newx] = mth_rk4(f, tt, dt, xx)
+function [t, x] = mth_rk4(f, t0, dt, x0)
 % MTH_RK4 performs Runge-Kutta Integration
 %
 %-----------------------------------------------------------------------
@@ -10,31 +10,31 @@ function [newt, newx] = mth_rk4(f, tt, dt, xx)
 %-----------------------------------------------------------------------
 %
 % Inputs
-%   f    Function to be integrated, f(tt, xx)
-%   tt   Current time
+%   f    Function to be integrated, f(t0, x0)
+%   t0   Current time
 %   dt   Time to integrate by
-%   xx   Current state
+%   x0   Current state
 %
 % Return
-%  newt   New time, tt + dt
-%  newx   Updated state vector
+%  t   New time, t0 + dt
+%  x   Updated state vector
 %
 
-  xd = f(tt, xx);
+  xd = f(t0, x0);
   xa = dt*xd;
-   x = xx + 0.5*xa;
-   t = tt + .5*dt;
+   x = x0 + 0.5*xa;
+   t = t0 + .5*dt;
     %
   xd = f(t, x);
    q = dt*xd;
-   x = xx + .5*q;
+   x = x0 + .5*q;
   xa = xa + q + q;
     %
   xd = f(t, x);
    q = dt*xd;
-   x = xx + q;
+   x = x0 + q;
   xa = xa + q + q;
-  newt = tt + dt;
+   t = t0 + dt;
     %
-  xd = f(newt, x);
-  newx = xx + (xa + dt*xd)/6.0;
+  xd = f(t, x);
+  x = x0 + (xa + dt*xd)/6.0;

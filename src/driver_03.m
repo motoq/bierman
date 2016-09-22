@@ -41,12 +41,12 @@ dt = .01;                                        % Data rate
   % Create an ideal trajectory.  This is the model used by the filter
   % without the influence of observations.
 [~, x_ideal] = traj_ideal(t0, dt, tf, x0);
-[t, rhos, vels] = traj_integ(t0, dt, tf, rho0, vel0);
+[t, x_integ] = traj_integ(t0, dt, tf, x0);
   % number of observed state vectors over time of interest or until impact
 nobs = size(t,2);
 
   % Plot geometry
-traj_plot(x_ideal, rhos, tkrs, blen);
+traj_plot(x_ideal, x_integ, tkrs, blen);
 title('Boxed Tracker Geometry');
 view([70 20]);
 
@@ -57,7 +57,7 @@ view([70 20]);
 z = zeros(nmeas,nobs);
 for ii = 1:nobs
   for jj = 1:nmeas
-    svec = rhos(:,ii) - tkrs(:,jj);
+    svec = x_integ(1:3,ii) - tkrs(:,jj);
     z(jj,ii) = norm(svec) + srng*randn;
   end
 end
