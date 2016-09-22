@@ -31,7 +31,10 @@ function [t, x] = traj_integ(t0, dt, tf, x0)
   x(1:6,1) = x0;
   for ii = 2:ntimes
     [~, x(:,ii)] = mth_rk4(@traj_dxdt, t(ii-1), dt, x(:,ii-1));
+      % Below "ground" - trim and return
     if x(3,ii) < 0
+      t = t(1:ii);
+      x = x(:,1:ii);
       break;
     end
   end
