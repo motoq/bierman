@@ -1,6 +1,7 @@
 function vel = traj_vel(dt, vel0)
 % TRAJ_VEL computes velocity as a function of time given initial velocity
-% assuming only gravitational acceleration via traj_gravt influences
+% assuming only a constant gravitational acceleration via traj_gravt
+% influences the trajectory.
 %
 %-----------------------------------------------------------------------
 % Copyright 2014 Kurt Motekew

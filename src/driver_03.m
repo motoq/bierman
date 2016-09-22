@@ -18,6 +18,7 @@ clear;
   % Tracked object initial state and trajectory
 rho0 = [0.35 0.25 .25]';
 vel0 =  [0.2  0.2  1]';
+x0 = [0.35 0.25 .25 0.2  0.2  1]';
 
   % Tracker locations
 blen = 1;
@@ -37,16 +38,34 @@ t0 = 0;                                          % Scenario start time
 tf = 3;                                          % Scenario stop time
 dt = .01;                                        % Data rate
 
-  % Create an ideal trajectory, as assumed by the filter,
-  % and the actual trajectory for which measurements will be based
-[~, rhos_ideal, vels_ideal] = traj_ideal(t0, dt, tf, rho0, vel0);
+  % Create an ideal trajectory.  This is the model used by the filter
+  % without the influence of observations.
+[~, x_ideal] = traj_ideal(t0, dt, tf, x0);
 [t, rhos, vels] = traj_integ(t0, dt, tf, rho0, vel0);
   % number of observed state vectors over time of interest or until impact
 nobs = size(t,2);
 
   % Plot geometry
-traj_plot(rhos_ideal, rhos, tkrs, blen);
+traj_plot(x_ideal, rhos, tkrs, blen);
 title('Boxed Tracker Geometry');
 view([70 20]);
+
+%
+% Create simulated range measurements and plot
+%
+
+z = zeros(nmeas,nobs);
+for ii = 1:nobs
+  for jj = 1:nmeas
+    svec = rhos(:,ii) - tkrs(:,jj);
+    z(jj,ii) = norm(svec) + srng*randn;
+  end
+end
+figure;
+mesh(z);
+xlabel('Observation');
+ylabel('Tracker');
+title('Measured Range to Tracked Object');
+
 
 
