@@ -1,9 +1,9 @@
 function [Q, R] = mth_qr(A)
-% MTH_QR decomposes an input covariance A matrix using "thin" QR decomposition
-% using the Gram-Schmidt method as described in "Optimal Estimation of Dynamic
-% Systems" by Crassidis and Junkins instead of the build in Octave/Matlab
-% version that uses Householder transformations (this is just for comparison
-% purposes).
+% MTH_QR decomposes an input [MxN] A matrix via "thin" QR decomposition
+% using the modified Gram-Schmidt method as described in "Optimal Estimation
+% of Dynamic Systems" by Crassidis and Junkins instead of the built in
+% Octave/Matlab version that uses Householder transformations.
+%
 % A = Q*R
 %
 %-----------------------------------------------------------------------
