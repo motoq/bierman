@@ -6,7 +6,7 @@
 % file, You can obtain one at http://mozilla.org/MPL/2.0/.
 %
 
-% This driver script compares compares A WLS solution of the normal equations
+% This driver script compares A WLS solution of the normal equations
 % with one using Householder triangularization.  It is primarily meant to
 % be a sanity check of the Householder decomposition, using a batch solution
 % as an example (vs. a filtered example).

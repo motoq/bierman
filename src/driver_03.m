@@ -6,8 +6,6 @@
 % file, You can obtain one at http://mozilla.org/MPL/2.0/.
 %
 
-% Beginning of dynamic scenario - smacking a wiffle ball in a room trajectory
-% Outputting filtered points only at observation updates
 %
 % Simple wiffle ball in a room trajectory
 %
