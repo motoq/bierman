@@ -1,4 +1,4 @@
-function dx = traj_dxdt(t, x)
+function dx = traj_dxdt(~, x)
 % TRAJ_DXDT computes the differential equation of a simple ballistic
 % trajectory.  Gravity and the ballistic coefficient are read by calling
 % external functions.

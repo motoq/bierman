@@ -29,8 +29,9 @@ function res_plot(title_hdr,t, x, xhat, SigmaX)
   figure; hold on;
   plot(t, residual(1,:), 'ro', t, residual(2,:), 'go', t, residual(3,:), 'bo');
   legend('x', 'y', 'z');
-  plot(t, sqrt(SigmaX(1,1,:)), 'r-', t, sqrt(SigmaX(2,2,:)), 'g-',...
-                                     t, sqrt(SigmaX(3,3,:)), 'b-');
+  plot(t, sqrt(squeeze(SigmaX(1,1,:))), 'r-',...
+       t, sqrt(squeeze(SigmaX(2,2,:))), 'g-',...
+       t, sqrt(squeeze(SigmaX(3,3,:))), 'b-');
   xlabel('Time');
   ylabel('Position Error, per Axis');
   title(strcat(title_hdr, ' Estimated Position Error and 95% Error Bounds'));
@@ -39,8 +40,9 @@ function res_plot(title_hdr,t, x, xhat, SigmaX)
   figure; hold on;
   plot(t, residual(4,:), 'ro', t, residual(5,:), 'go', t, residual(6,:), 'bo');
   legend('x', 'y', 'z');
-  plot(t, sqrt(SigmaX(4,4,:)), 'r-', t, sqrt(SigmaX(5,5,:)), 'g-',...
-                                     t, sqrt(SigmaX(6,6,:)), 'b-');
+  plot(t, sqrt(squeeze(SigmaX(4,4,:))), 'r-',...
+       t, sqrt(squeeze(SigmaX(5,5,:))), 'g-',...
+       t, sqrt(squeeze(SigmaX(6,6,:))), 'b-');
   xlabel('Time');
   ylabel('Velocity Error, per Axis');
   title(strcat(title_hdr, ' Estimated Velocity Error and 95% Error Bounds'));

@@ -132,5 +132,5 @@ for ii = 2:nfilt
                                                 x_0(:,3),  P_0(:,:,3));
 end
 filt_rng = ninit:(ninit+nfilt-1);
-res_plot("WLS", t(filt_rng), x_true(:,filt_rng), x, P);
+res_plot('WLS', t(filt_rng), x_true(:,filt_rng), x, P);
 
