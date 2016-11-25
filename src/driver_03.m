@@ -24,9 +24,10 @@
 %    then used to estimate the velocity and velocity covariance associated
 %    with the latest position estimate.
 % 
-% 2) 
+% 2) Adding first filtered versions - in progress
 %
 % Kurt Motekew  2016/09/28
+%               2016/11/25
 %
 
 close all;
@@ -116,9 +117,11 @@ P = zeros(6,6,nfilt);
 x(:,1) = [x_0(:,ninit) ; vel]; 
 P(1:3,1:3,1) = P_0(:,:,3);
 P(4:6,4:6,1) = SigmaV;
+  % Subset of full obs for filtering
+filt_rng = ninit:(ninit+nfilt-1);
 
   % Batch method - observation model only
-  % Don't use the first ninit observations.
+  % Note offset in observations being passed
 for ii = 2:nfilt
   [x(1:3,ii), P(1:3,1:3,ii)] = box_locate(tkrs, z(:,ii+ninit-1)', W);
   x_0(:,1) = x_0(:,2);
@@ -131,6 +134,76 @@ for ii = 2:nfilt
                                                 x_0(:,2),  P_0(:,:,2),...
                                                 x_0(:,3),  P_0(:,:,3));
 end
-filt_rng = ninit:(ninit+nfilt-1);
 res_plot('WLS', t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('WLS Trajectory');
+view([70 20]);
 
+  % Linear filter (via U-D method)
+Phi = traj_strans(dt);
+x_hat = x(:,1);
+x_bar = x_hat;
+P_hat = P(:,:,1);
+x = zeros(6,nfilt);
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;
+P(:,:,1) = P_hat;
+for ii = 2:nfilt
+    % First propagate to new time
+  [U, D] = mth_udut2(P_hat);
+  [x_bar, U, D] = est_pred_ud(x_hat, U, D, Phi, zeros(6), eye(6));
+  
+    % Obs update
+  for jj = 1:ntkrs
+    Ap = zeros(1,6);
+    Ap(1:3) = est_drng_dloc(tkrs(:,jj), x(1:3,ii));
+    zc = norm(x_bar(1:3) - tkrs(:,jj));
+    r = z(jj,ii+ninit-1) - zc;
+    [x_bar, U, D] = est_upd_ud(x_bar, U, D, Ap, r, vrng);
+  end
+  x_hat = x_bar;
+  P_hat = U*D*U';
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+res_plot('UD', t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('Linear UD Trajectory');
+view([70 20]);
+
+  % Linearized filter (via U-D method)
+Phi = traj_strans(dt);
+x_hat = x(:,1);
+x_bar = x_hat;
+P_hat = P(:,:,1);
+x = zeros(6,nfilt);
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;
+P(:,:,1) = P_hat;
+for ii = 2:nfilt
+    % First propagate to new time
+  [U, D] = mth_udut2(P_hat);
+  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, zeros(6), eye(6));
+  x_bar(1:3) = traj_pos(dt, x_hat(1:3), x_hat(4:6));
+  x_bar(4:6) = traj_vel(dt, x_hat(4:6));
+  
+    % Obs update
+  for jj = 1:ntkrs
+    Ap = zeros(1,6);
+    Ap(1:3) = est_drng_dloc(tkrs(:,jj), x(1:3,ii));
+    zc = norm(x_bar(1:3) - tkrs(:,jj));
+    r = z(jj,ii+ninit-1) - zc;
+    [x_bar, U, D] = est_upd_ud(x_bar, U, D, Ap, r, vrng);
+  end
+  x_hat = x_bar;
+  P_hat = U*D*U';
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+res_plot('Linearized UD', t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('Linear UD Trajectory');
+view([70 20]);

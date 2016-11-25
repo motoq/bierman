@@ -15,4 +15,4 @@ function b = traj_bcoeff
 %      of flight
 %
 
-  b = -.05;
+  b = 0;%-.05;
