@@ -1,8 +1,8 @@
 function traj_plot(rhom, rho, r, blen)
-% TRAJ_PLOT plots tracker locations and the trajectory of a moving
-% tracked object ("ideal" and "truth" trajectories) to illustrate the
-% the scenario being modeled.  The ideal trajectory is yellow, the true
-% trajectory is blue, and the common starting location is a red point.
+% TRAJ_PLOT plots tracker locations and compares two trajectories of a moving
+% vs. tracked object.  For example, "ideal" and "truth" trajectories  may
+% be plotted to illustrate the error drag induces on a true trajectory
+% vs. an ideal one.
 %
 %-----------------------------------------------------------------------
 % Copyright 2014 Kurt Motekew
