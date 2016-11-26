@@ -3,7 +3,7 @@ function dx = traj_dxdt(~, x)
 % trajectory.  Gravity and the ballistic coefficient are read by calling
 % external functions.
 %
-%     ddx/ddt = b*dx/dt + g
+%     ddx/ddt = -b*dx/dt + g
 %
 %-----------------------------------------------------------------------
 % Copyright 2014 Kurt Motekew
@@ -40,6 +40,6 @@ function dx = traj_dxdt(~, x)
 
   v = x(4:6,1);
 
-  dx(4:6,1) = b*v + g;
+  dx(4:6,1) = -b*v + g;
   dx(1:3,1) = v;
 

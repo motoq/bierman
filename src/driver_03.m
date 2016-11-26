@@ -33,6 +33,9 @@
 close all;
 clear;
 
+global global_b;
+global_b = 0;
+
   %
   % SETUP
   %
