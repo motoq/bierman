@@ -41,5 +41,17 @@ Illustrates sequential estimation via QR SRIF for a linear problem.
 driver_03.m
 ```
 Estimation of a dynamic state - simple wiffle ball in a room trajectory
+
+This driver script is the first of this series of examples illustrating
+filtering of a dynamic scenario.  A simple drag free trajectory is created
+along with simulated range observations (using range trackers from previous
+examples) that are subject to only measurement noise.  No bias effects
+have been added.  The goal is to implement a simple filter (observation model
+and dynamic model) that outperforms the WLS method (observation model only).
+```
+
+driver_04.m
+```
+Just started - addressing the effect of an incorrect model
 ```
 
