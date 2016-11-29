@@ -1,4 +1,4 @@
-function [x, U, D] = est_pre_ud(x, U, D, Phi, Q, G)
+function [x, U, D] = est_pred_ud(x, U, D, Phi, Q, G)
 % EST_PRE_UD Updates a prior estimate's U-D covariance given a state transition
 % matrix and process noise matrix.  The decomposed form is such that
 % P = UDU' where U is a unit upper triangular matrix and D is a diagonal matrix.
@@ -37,7 +37,7 @@ function [x, U, D] = est_pre_ud(x, U, D, Phi, Q, G)
 
     % Cheat for now - need to implement recursive form
   P = U*D*U';
-  P = Phi*P*Phi' + G*Q*G';
+  P = Phi*P*Phi' + G*diag(Q)*G';
   [U, D] = mth_udut2(P);
 
     % Get matrix sizes for looping

@@ -166,7 +166,7 @@ P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
 for ii = 2:nfilt
     % First propagate state and covariance to new time - no process noise
-  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, zeros(6), eye(6));
+  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, zeros(1,6), eye(6));
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];

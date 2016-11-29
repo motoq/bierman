@@ -8,6 +8,7 @@ will be developed as examples are finished.
 
 Estimation of a static state is first illustrated.  Range only trackers are
 used to estimate the location of an object within a boxed volume.
+Estimation of a dynamics state follows.
 
 driver_01.m
 ```
