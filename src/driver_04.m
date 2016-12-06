@@ -150,14 +150,21 @@ title('WLS Trajectory');
 view([70 20]);
 
   %
+  % 'a priori' estimate and covariance to prime filters
+  %
+
+x_hat0 = x(:,1);                            % 'a priori' estimate and
+P_hat0 = P(:,:,1);                           % covariance
+
+  %
   % Linearized extended filter (via U-D method)
   % Nonlinear yet simple analytic trajectory for state propagation.
   % State vector of position and velocity - no acceleration terms in
   % the state transition matrix
   %
 
-x_hat = x(:,1);                             % 'a priori' estimate and
-P_hat = P(:,:,1);                           % covariance
+x_hat = x_hat0;
+P_hat = P_hat0;
 [U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
 x = zeros(6,nfilt);                         % Reset stored estimates
 P = zeros(6,6,nfilt);
@@ -166,10 +173,10 @@ P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
 for ii = 2:nfilt
     % First propagate state and covariance to new time - no process noise
-  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, zeros(1,6), eye(6));
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];
+  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, 0, zeros(6,1));
   
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
@@ -188,4 +195,49 @@ res_plot('Linearized Extended UD', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('Linearized Extended UD Trajectory');
+view([70 20]);
+
+  %
+  % Linearized extended filter (via U-D method) with covariance inflation
+  % Nonlinear yet simple analytic trajectory for state propagation.
+  % State vector of position and velocity - no acceleration terms in
+  % the state transition matrix
+  %
+
+x_hat = x_hat0;
+P_hat = P_hat0;
+[U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
+x = zeros(6,nfilt);                         % Reset stored estimates
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;                             % Set first estimate to
+P(:,:,1) = P_hat;                           % 'a priori' values
+Phi = traj_strans(dt);                      % Fixed state transition matrix
+for ii = 2:nfilt
+    % First propagate state and covariance to new time - add
+    % process noise when propagating covariance
+  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
+  vel = traj_vel(dt, x_hat(4:6));
+  x_bar = [pos ; vel];
+  Q = (.5*global_b)^2;
+  G = -[.5*vel*dt ; vel]*dt;
+  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, Q, G);
+  
+    % Obs update based on observed (z) vs. computed (zc) residual (r)
+  for jj = 1:ntkrs
+    Ax = zeros(1,6);
+    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x(1:3,ii));
+    zc = norm(x_bar(1:3) - tkrs(:,jj));
+    r = z(jj,ii+filt_ndxoff) - zc;
+    [x_hat, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);
+    x_bar = x_hat;
+  end
+  P_hat = U*D*U';
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+res_plot('Linearized Extended UD with Q',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('Linearized Extended UD Trajectory with Q');
 view([70 20]);
