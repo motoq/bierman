@@ -27,10 +27,11 @@
 %    example is implemented.  The goal is to show how the unmodeled 
 %    drag causes the filter to diverge from the true solution.
 %
-% 3)
+% 3) The same as 2), but with the addition of process noise during the
+%    covariance propagation phase to illustrate keeping the filter in check.
 %
 % Kurt Motekew  2016/09/28
-%               2016/11/26
+%               2016/12/06
 %
 
 close all;
@@ -218,7 +219,8 @@ for ii = 2:nfilt
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];
-  Q = (.5*global_b)^2;
+  %Q = (.5*global_b)^2;
+  Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
   [~, U, D] = est_pred_ud(x_hat, U, D, Phi, Q, G);
   

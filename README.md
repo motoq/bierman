@@ -19,7 +19,14 @@ stabilized Kalman, Potter mechanization, and U-D sequential methods.
 driver_02.m
 ```
 Performs speed comparisons of the stabilized Kalman, Potter
-mechanization, and U-D sequential estimation methods.
+mechanization, and U-D sequential estimation methods.  Percent
+containment is also output.
+```
+
+driver_02b.m
+```
+Performs speed comparisons of the stabilized the U-D and SRIF
+methods.  Percent containment is also outout.
 ```
 
 driver_householder.m - detour

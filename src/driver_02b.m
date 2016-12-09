@@ -6,9 +6,8 @@
 % file, You can obtain one at http://mozilla.org/MPL/2.0/.
 %
 
-% This driver script does speed comparisions with the stabilized Kalman,
-% Potter mechanization, and U-D sequential estimation methods.
-% Containment is also output.
+% This driver script does speed comparisions with the U-D and SRIF
+% estimation methods.  Containment is also output
 
 
 close all;
@@ -40,15 +39,12 @@ Wsqrt = 1/srng;
 y(nmeas) = 0;
 y2(nmeas2) = 0;
 testnum = 1:ntest;
-miss_kf = zeros(1,ntest);
-miss_pt = zeros(1,ntest);
 miss_ud = zeros(1,ntest);
-contained_3d_kf = 0;
-contained_3d_pt = 0;
+miss_srif = zeros(1,ntest);
 contained_3d_ud = 0;
-kf_time = 0;
-pt_time = 0;
+contained_3d_srif = 0;
 ud_time = 0;
+srif_time = 0;
 
 %
 % Loop over the number of trials
@@ -76,44 +72,14 @@ for jj = 1:ntest
   [phat0, SigmaP0, ~] = box_locate(tkrs, y, W);
 
     % Sequential estimation based on initial estimate
-  phat_kf = phat0;
-  P = SigmaP0;                                   % Kalman covariance
-  phat_pt = phat0;
-  S = mth_sqrtm(SigmaP0);                        % Potter covariance sqrt
   phat_ud = phat0;
   [U, D] = mth_udut2(SigmaP0);                   % U-D, SigmaP = UDU'
+    % Use Householder method for initial estimate and get info array
+  [phat_srif, SigmaP_srif, R, z, ~] = box_locate_hh(tkrs, y, Wsqrt*eye(nmeas));
 
   %
   % Updates
   %
-
-    % Kalman
-  tic;
-  for ii = 1:nmeas2
-    itkr = mod(ii,nmeas);                        %  Determine which tracker
-    if itkr == 0
-      itkr = nmeas;
-    end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_kf);    % Partials, [1x3]
-    yc = norm(phat_kf - tkrs(:,itkr));            % Computed observation, scalar
-    r = y2(ii) - yc;                             % Predicted residual
-    [phat_kf, P] = est_upd_kalman(phat_kf, P, Ap, r, Wsqrt);
-  end
-  kf_time = kf_time + toc;
-
-    % Potter
-  tic;
-  for ii = 1:nmeas2
-    itkr = mod(ii,nmeas);
-    if itkr == 0
-      itkr = nmeas;
-    end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_pt);
-    yc = norm(phat_pt - tkrs(:,itkr));
-    r = y2(ii) - yc;
-    [phat_pt, S] = est_upd_potter(phat_pt, S, Ap, r, Wsqrt);
-  end
-  pt_time = pt_time + toc;
 
     % U-D
   tic;
@@ -129,40 +95,49 @@ for jj = 1:ntest
   end
   ud_time = ud_time + toc;
 
+    % SRIF
+  tic;
+  for ii = 1:nmeas2
+    itkr = mod(ii,nmeas);
+    if itkr == 0
+      itkr = nmeas;
+    end
+    Ap = est_drng_dloc(tkrs(:,itkr), phat_srif);
+    yc = norm(phat_srif - tkrs(:,itkr));
+    r = y2(ii) - yc;
+    [dp, R, z] = est_upd_hhsrif(R, z*srng, Ap, r, Wsqrt);
+    phat_srif = phat_srif + dp;
+  end
+  srif_time = srif_time + toc;
+
   %
   % End updates
   %
 
     % Get containment stats for each
-  if (SF95_3D > mth_mahalanobis(rho, phat_kf, P))
-    contained_3d_kf = contained_3d_kf + 1;
-  end
-  miss_kf(jj) = norm(phat_kf - rho);
-  if (SF95_3D > mth_mahalanobis(rho, phat_pt, S*S'))
-    contained_3d_pt = contained_3d_pt + 1;
-  end
-  miss_pt(jj) = norm(phat_pt - rho);
+  miss_ud(jj) = norm(phat_ud - rho);
   if (SF95_3D > mth_mahalanobis(rho, phat_ud, U*D*U'))
     contained_3d_ud = contained_3d_ud + 1;
   end
-  miss_ud(jj) = norm(phat_ud - rho);
+  miss_srif(jj) = norm(phat_srif - rho);
+  Rinv = mth_triinv(R);
+  if (SF95_3D > mth_mahalanobis(rho, phat_srif, Rinv*Rinv'))
+    contained_3d_srif = contained_3d_srif + 1;
+  end
 end
-p95_3d_kf = 100*contained_3d_kf/ntest;
-p95_3d_pt = 100*contained_3d_pt/ntest;
 p95_3d_ud = 100*contained_3d_ud/ntest;
+p95_3d_srif = 100*contained_3d_srif/ntest;
 
 figure; hold on;
-plot(testnum, miss_kf, 'o', testnum, miss_pt, '*', testnum, miss_ud, 's');
+plot(testnum, miss_ud, 'o', testnum, miss_srif, '+');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('Kalman', 'Potter', 'U-D');
+legend('U-D', 'SRIF');
 
-fprintf('\nKalman containment: %1.1f', p95_3d_kf);
-fprintf(' in %1.4f seconds', kf_time);
-fprintf('\nPotter containment: %1.1f', p95_3d_pt);
-fprintf(' in %1.4f seconds', pt_time);
 fprintf('\nU-D containment: %1.1f', p95_3d_ud);
 fprintf(' in %1.4f seconds', ud_time);
+fprintf('\nSRIF containment: %1.1f', p95_3d_srif);
+fprintf(' in %1.4f seconds', srif_time);
 
 fprintf('\n');
 
