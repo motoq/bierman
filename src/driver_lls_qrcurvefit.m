@@ -65,8 +65,6 @@ title('Curve Fit via QR decomposition of the Jacobian');
   % Batch init via QR
 m = 3;
 m2 = 5;
-
-  % Batch via QR
 A = zeros(m, 3);
 for ii = 1:m
   A(ii, 1) = 1;
@@ -80,12 +78,13 @@ z = SqrtW*y(1:m,1);
 qty = Q'*z;
   % Coefficients
 phat = mth_trisol(R, qty);
-  % Plot initial estimate
+  % Plot using only initial estimate
 for ii = 1:num
   yc(ii) = phat(1) + phat(2)*xc(ii) + phat(3)*exp(xc(ii));
 end
 plot(xc, yc, '-r');
 
+  % Sequentially update with remaining obs
 sw = 1/sigma;
 for ii = (m+1):m2
   A = [1 x(ii) exp(x(ii))];

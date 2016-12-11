@@ -66,8 +66,6 @@ title('Curve Fit via Householder Triangularization of the Information Array');
   % Batch init via Householder
 m = 3;
 m2 = 5;
-
-  % Batch via Householder
 A = zeros(m, 3);
 for ii = 1:m
   A(ii, 1) = 1;
@@ -82,16 +80,17 @@ R = Rz(1:n,1:n);
 z = Rz(1:n,(n+1));
   % Coefficients
 phat = mth_trisol(R,z);
-  % Plot initial estimate
+  % Plot using only initial estimate
 for ii = 1:num
   yc(ii) = phat(1) + phat(2)*xc(ii) + phat(3)*exp(xc(ii));
 end
 plot(xc, yc, '-r');
 
+  % Sequentially update with remaining obs
 sw = 1/sigma;
 for ii = (m+1):m2
   A = [1 x(ii) exp(x(ii))];
-  [phat, R, z] = est_upd_hhsrif(R, z, A, y(ii,1), sw);
+  [phat, R, z, ~] = est_upd_hhsrif(R, z, A, y(ii,1), sw);
 end
   % Plot updated estimate
 for ii = 1:num
