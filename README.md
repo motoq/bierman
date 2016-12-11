@@ -2,9 +2,8 @@ Bierman
 =======
 
 This project is written as a supplement to Gerald J. Bierman's "Factorization
-Methods for Discrete Sequential Estimation".  Selected algorithms are be
-illustrated in Matlab (actually developed with Octave).  Further documentation
-will be developed as examples are finished.
+Methods for Discrete Sequential Estimation".  Selected algorithms are
+illustrated in Matlab (actually developed with Octave).
 
 Estimation of a static state is first illustrated.  Range only trackers are
 used to estimate the location of an object within a boxed volume.
@@ -60,6 +59,8 @@ and dynamic model) that outperforms the WLS method (observation model only).
 
 driver_04.m
 ```
-Just started - addressing the effect of an incorrect model
+Adds drag to the truth model for driver_03 while leaving it out of the
+filter model.  Illustrates divergence in the filter and how to fix it
+with the inclusion of process noise.
 ```
 
