@@ -76,7 +76,7 @@ for jj = 1:ntest
   [U, D] = mth_udut2(SigmaP0);                   % U-D, SigmaP = UDU'
     % Use Householder method for initial estimate and get info array
   [phat_srif, SigmaP_srif, R, z, ~] = box_locate_hh(tkrs, y, Wsqrt*eye(nmeas));
-  z = srng*z;                                    % un-whiten residual
+  z = 0*z;
 
   %
   % Updates
@@ -107,7 +107,7 @@ for jj = 1:ntest
     yc = norm(phat_srif - tkrs(:,itkr));
     r = y2(ii) - yc;
     [dp, R, z, ~] = est_upd_hhsrif(R, z, Ap, r, Wsqrt);
-    z = srng*z;                                  % un-whiten residual
+    z = 0*z;
     phat_srif = phat_srif + dp;
   end
   srif_time = srif_time + toc;

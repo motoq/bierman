@@ -8,7 +8,7 @@
 
 % This driver does a sanity check for processing different observation types
 % for both the U-D and SRIF filters.  U-D obs are still processed individually
-% while SRIF obs are processed as measurement sets.
+% while SRIF obs are processed both individually and as measurement sets.
 
 close all;
 clear;
@@ -42,10 +42,13 @@ y2(3,nmeas2) = 0;
 testnum = 1:ntest;
 miss_ud = zeros(1,ntest);
 miss_srif = zeros(1,ntest);
+miss_srifb = zeros(1,ntest);
 contained_3d_ud = 0;
 contained_3d_srif = 0;
+contained_3d_srifb = 0;
 ud_time = 0;
 srif_time = 0;
+srifb_time = 0;
 
 %
 % Loop over the number of trials
@@ -84,7 +87,9 @@ for jj = 1:ntest
     % Use Householder method for initial estimate and get info array
     % Range only for init as with Householder
   [phat_srif, SigmaP_srif, R, z, ~] = box_locate_hh(tkrs, y, Wsqrt*eye(nmeas));
-  z = srng*z;                                    % un-whiten residual
+  phat_srifb = phat_srif;
+  Rb = R;
+  z = 0*z;
 
   %
   % Updates - use range and pointing obs
@@ -112,8 +117,7 @@ for jj = 1:ntest
   ud_time = ud_time + toc;
 
     % SRIF
-  SigmaObsSqrt = [srng 0 0 ; 0 sang 0 ; 0 0 sang];
-  WSqrt = [1/srng 0 0 ; 0 1/sang 0 ; 0 0 1/sang];
+  Wsqrts = [1/srng 1/sang 1/sang];
   tic;
   for ii = 1:nmeas2
     itkr = mod(ii,nmeas);
@@ -126,12 +130,35 @@ for jj = 1:ntest
     shat = s/smag;
     yc = [smag ; shat(1:2,1)];
     r = y2(:,ii) - yc;
-      % Process measurement sets
-    [dp, R, z, ~] = est_upd_hhsrif(R, z, Ap, r, Wsqrt);
-    z = SigmaObsSqrt*z;                          % un-whiten residual
-    phat_srif = phat_srif + dp;
+      % Loop through each obs in the set
+    for kk = 1:3
+      [dp, R, z, ~] = est_upd_hhsrif(R, z, Ap(kk,:), r(kk), Wsqrts(kk));
+      z = 0*z;
+      phat_srif = phat_srif + dp;
+    end
   end
   srif_time = srif_time + toc;
+
+    % SRIF Batch
+  Wsqrtb = [1/srng 0 0 ; 0 1/sang 0 ; 0 0 1/sang];
+  tic;
+  for ii = 1:nmeas2
+    itkr = mod(ii,nmeas);
+    if itkr == 0
+      itkr = nmeas;
+    end
+    Ap = est_drpnt_dloc(tkrs(:,itkr), phat_srifb);
+    s = phat_srifb - tkrs(:,itkr);
+    smag = norm(s);
+    shat = s/smag;
+    yc = [smag ; shat(1:2,1)];
+    r = y2(:,ii) - yc;
+      % Process measurement sets
+    [dp, Rb, z, ~] = est_upd_hhsrif(Rb, z, Ap, r, Wsqrtb);
+    z = 0*z;
+    phat_srifb = phat_srifb + dp;
+  end
+  srifb_time = srifb_time + toc;
 
   %
   % End updates
@@ -142,25 +169,35 @@ for jj = 1:ntest
   if (SF95_3D > mth_mahalanobis(rho, phat_ud, U*D*U'))
     contained_3d_ud = contained_3d_ud + 1;
   end
+    %
   miss_srif(jj) = norm(phat_srif - rho);
   Rinv = mth_triinv(R);
   if (SF95_3D > mth_mahalanobis(rho, phat_srif, Rinv*Rinv'))
     contained_3d_srif = contained_3d_srif + 1;
   end
+    %
+  miss_srifb(jj) = norm(phat_srifb - rho);
+  Rbinv = mth_triinv(Rb);
+  if (SF95_3D > mth_mahalanobis(rho, phat_srifb, Rbinv*Rbinv'))
+    contained_3d_srifb = contained_3d_srifb + 1;
+  end
 end
 p95_3d_ud = 100*contained_3d_ud/ntest;
 p95_3d_srif = 100*contained_3d_srif/ntest;
+p95_3d_srifb = 100*contained_3d_srifb/ntest;
 
 figure; hold on;
-plot(testnum, miss_ud, 'o', testnum, miss_srif, '+');
+plot(testnum, miss_ud, 'o', testnum, miss_srif, '+', testnum, miss_srifb, '*');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('U-D', 'SRIF');
+legend('U-D', 'SRIF', 'SRIF B');
 
 fprintf('\nU-D containment: %1.1f', p95_3d_ud);
 fprintf(' in %1.4f seconds', ud_time);
 fprintf('\nSRIF containment: %1.1f', p95_3d_srif);
 fprintf(' in %1.4f seconds', srif_time);
+fprintf('\nSRIF Batch containment: %1.1f', p95_3d_srifb);
+fprintf(' in %1.4f seconds', srifb_time);
 
 fprintf('\n');
 
