@@ -88,7 +88,7 @@ plot(xc, yc, '-r');
 sw = 1/sigma;
 for ii = (m+1):m2
   A = [1 x(ii) exp(x(ii))];
-  [phat, R, qty] = est_upd_qrsrif(R, qty, A, y(ii,1), sw);
+  [phat, R, qty] = est_upd_qrif(R, qty, A, y(ii,1), sw);
 end
   % Plot updated estimate
 for ii = 1:num

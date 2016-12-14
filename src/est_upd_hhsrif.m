@@ -20,7 +20,7 @@ function [xhat, Rhat, zhat, e] = est_upd_hhsrif(R0, z0, A, z, SqrtW)
 %
 % Return:
 %   xhat     Updated estimated, [Nx1]
-%   Rhat     Updated R0, [NxN]
+%   Rhat     Updated R0, upper triangular, [NxN]
 %   zhat     Updated z0, [Nx1]
 %   e        Residual, [(M-N)x1]
 %
