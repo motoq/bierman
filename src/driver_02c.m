@@ -9,6 +9,7 @@
 % This driver does a sanity check for processing different observation types
 % for both the U-D and SRIF filters.  U-D obs are still processed individually
 % while SRIF obs are processed both individually and as measurement sets.
+% A QR version of the SRIF is also performed.
 
 close all;
 clear;
@@ -43,12 +44,15 @@ testnum = 1:ntest;
 miss_ud = zeros(1,ntest);
 miss_srif = zeros(1,ntest);
 miss_srifb = zeros(1,ntest);
+miss_qr = zeros(1,ntest);
 contained_3d_ud = 0;
 contained_3d_srif = 0;
 contained_3d_srifb = 0;
+contained_3d_qr = 0;
 ud_time = 0;
 srif_time = 0;
 srifb_time = 0;
+qr_time = 0;
 
 %
 % Loop over the number of trials
@@ -90,6 +94,9 @@ for jj = 1:ntest
   phat_srifb = phat_srif;
   Rb = R;
   z = 0*z;
+    % QR init, similar to Householder
+  [phat_qr, SigmaP_qr, Rqr, qty, ~] = box_locate_qr(tkrs, y, Wsqrt*eye(nmeas));
+  qty = 0*qty;
 
   %
   % Updates - use range and pointing obs
@@ -160,6 +167,26 @@ for jj = 1:ntest
   end
   srifb_time = srifb_time + toc;
 
+    % QR Batch
+  tic;
+  for ii = 1:nmeas2
+    itkr = mod(ii,nmeas);
+    if itkr == 0
+      itkr = nmeas;
+    end
+    Ap = est_drpnt_dloc(tkrs(:,itkr), phat_qr);
+    s = phat_qr - tkrs(:,itkr);
+    smag = norm(s);
+    shat = s/smag;
+    yc = [smag ; shat(1:2,1)];
+    r = y2(:,ii) - yc;
+      % Process measurement sets
+    [dp, Rqr, qty] = est_upd_qrsrif(Rqr, qty, Ap, r, Wsqrtb);
+    qty = 0*qty;
+    phat_qr = phat_qr + dp;
+  end
+  qr_time = qr_time + toc;
+
   %
   % End updates
   %
@@ -181,16 +208,24 @@ for jj = 1:ntest
   if (SF95_3D > mth_mahalanobis(rho, phat_srifb, Rbinv*Rbinv'))
     contained_3d_srifb = contained_3d_srifb + 1;
   end
+    %
+  miss_qr(jj) = norm(phat_qr - rho);
+  Rqrinv = mth_triinv(Rqr);
+  if (SF95_3D > mth_mahalanobis(rho, phat_qr, Rqrinv*Rqrinv'))
+    contained_3d_qr = contained_3d_qr + 1;
+  end
 end
 p95_3d_ud = 100*contained_3d_ud/ntest;
 p95_3d_srif = 100*contained_3d_srif/ntest;
 p95_3d_srifb = 100*contained_3d_srifb/ntest;
+p95_3d_qr = 100*contained_3d_qr/ntest;
 
 figure; hold on;
-plot(testnum, miss_ud, 'o', testnum, miss_srif, '+', testnum, miss_srifb, '*');
+plot(testnum, miss_ud, 'o', testnum, miss_srif, '+',...
+     testnum, miss_srifb, '*', testnum, miss_qr, 'o');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('U-D', 'SRIF', 'SRIF B');
+legend('U-D', 'SRIF', 'SRIF B', 'QR');
 
 fprintf('\nU-D containment: %1.1f', p95_3d_ud);
 fprintf(' in %1.4f seconds', ud_time);
@@ -198,6 +233,8 @@ fprintf('\nSRIF containment: %1.1f', p95_3d_srif);
 fprintf(' in %1.4f seconds', srif_time);
 fprintf('\nSRIF Batch containment: %1.1f', p95_3d_srifb);
 fprintf(' in %1.4f seconds', srifb_time);
+fprintf('\nQR Batch containment: %1.1f', p95_3d_qr);
+fprintf(' in %1.4f seconds', qr_time);
 
 fprintf('\n');
 
