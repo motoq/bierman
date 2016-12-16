@@ -3,11 +3,14 @@ Bierman
 
 This project is written as a supplement to Gerald J. Bierman's "Factorization
 Methods for Discrete Sequential Estimation".  Selected algorithms are
-illustrated in Matlab (actually developed with Octave).
+illustrated in Matlab (actually developed with Octave).  The emphasis is
+on illustrating the use of these algorithms for problems requiring
+"linearization" along with the "extended" filtering method.
 
-Estimation of a static state is first illustrated.  Range only trackers are
-used to estimate the location of an object within a boxed volume.
-Estimation of a dynamics state follows.
+Estimation of a static state is first illustrated.  Range only trackers
+are used to estimate the location of an object within a boxed volume.
+Estimation of a dynamics state follows by tracking movement of a wiffle
+ball within a room using the same range only trackers.
 
 driver_01.m
 ```
@@ -42,7 +45,8 @@ problem.
 
 driver_lls_qrcurvefit.m - detour
 ```
-Illustrates sequential estimation via QR SRIF for a linear problem.
+Illustrates sequential estimation via a QR information filter (QRIF) for
+a linear problem.
 ```
 
 driver_03.m
