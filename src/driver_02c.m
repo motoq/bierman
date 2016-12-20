@@ -9,8 +9,7 @@
 % This driver does a sanity check for processing different observation types
 % for both the U-D and SRIF filters.  U-D obs are still processed individually
 % while SRIF obs are processed both individually and as measurement sets.
-% A QR version of the SRIF (QR Information Filter, drop the square root) is
-% also performed.
+% A QR version of the SRIF is also performed.
 
 close all;
 clear;
@@ -182,7 +181,7 @@ for jj = 1:ntest
     yc = [smag ; shat(1:2,1)];
     r = y2(:,ii) - yc;
       % Process measurement sets
-    [dp, Rqr, qty] = est_upd_qrif(Rqr, qty, Ap, r, Wsqrtb);
+    [dp, Rqr, qty] = est_upd_qrsrif(Rqr, qty, Ap, r, Wsqrtb);
     qty = 0*qty;
     phat_qr = phat_qr + dp;
   end
@@ -226,7 +225,7 @@ plot(testnum, miss_ud, 'o', testnum, miss_srif, '+',...
      testnum, miss_srifb, '*', testnum, miss_qr, 'o');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('U-D', 'SRIF', 'SRIF B', 'QR');
+legend('U-D', 'SRIF', 'SRIF B', 'QR SRIF');
 
 fprintf('\nU-D containment: %1.1f', p95_3d_ud);
 fprintf(' in %1.4f seconds', ud_time);

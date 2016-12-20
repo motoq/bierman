@@ -163,7 +163,7 @@ for ii = 2:nfilt
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
     Ax = zeros(1,6);
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x(1:3,ii));
+    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
     zc = norm(x_bar(1:3) - tkrs(:,jj));
     r = z(jj,ii+filt_ndxoff) - zc;
     [x_hat, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);

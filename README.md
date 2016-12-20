@@ -45,8 +45,7 @@ problem.
 
 driver_lls_qrcurvefit.m - detour
 ```
-Illustrates sequential estimation via a QR information filter (QRIF) for
-a linear problem.
+Illustrates sequential estimation via a QR SRIF for a linear problem.
 ```
 
 driver_03.m

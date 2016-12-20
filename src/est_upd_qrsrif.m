@@ -1,6 +1,6 @@
-function [x, R, qty] = est_upd_qrif(R, qty, A, z, SqrtW)
-% EST_UPD_QRIF Updates the apriori estimate and covariance via a QR IF
-% (QR information filter) given a new set of observations.
+function [x, R, qty] = est_upd_qrsrif(R, qty, A, z, SqrtW)
+% EST_UPD_QRSRIF Updates the apriori estimate and covariance via a QR SRIF
+% given a new set of observations.
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew
