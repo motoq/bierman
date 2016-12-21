@@ -1,7 +1,6 @@
 function [R, b] = est_pred_hhsrif(R, b, PhiInv, Rw, G)
 % EST_PRE_HHSRIf Updates a prior estimate's square root information matrix
-% transition matrix and process noise matrix.  The decomposed form is
-% such that
+% in time give a state transition matrix.  Also incorporates proces noise.
 %
 %-----------------------------------------------------------------------
 % Copyright 2016 Kurt Motekew

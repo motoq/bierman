@@ -70,7 +70,7 @@ with the inclusion of process noise.
 driver_04b.m
 ```
 The same scenario as driver_04.m where the truth model includes drag and
-the filter model doesn't.  Here, the U-D and SRIF methods are compares
+the filter model doesn't.  Here, the U-D and SRIF methods are compared
 where both incorporate process noise to account for the unmodeled drag
 effect.
 ```
