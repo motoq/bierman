@@ -9,29 +9,14 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% This driver script picks up with the previous example by adding drag to the
-% true trajectory while the model used by the filter incorporates only
-% gravity.  The "true" trajectory based on integrating a simple flat earth
-% gravity model with a fixed drag coefficient is generated along with the ideal
-% analytic model used by the filter are computed and plotted.  The range
-% tracker locations are also included for reference.  The true trajectory and
-% range measurement uncertainty is then used to create simulated observations.
+% This driver compares the U-D with process noise method from driver_04.m
+% to the SRIF solution.  The SRIF covariance propagation and process noise
+% inclusion method via Householder transformations is implemented.
+% As before, the "true" trajectory based on integrating a simple flat earth
+% gravity model with a fixed drag coefficient while the filter uses an ideal
+% model that lacks drag.
 %
-% 1) Batch Method (observation model only).  A WLS method is used to
-%    process range values at each time step.  The current position estimate
-%    and two prior estimates, along with the corresponding covariances, are
-%    then used to estimate the velocity and velocity covariance associated
-%    with the latest position estimate.
-% 
-% 2) A linearized extended version of the U-D filter from the previous
-%    example is implemented.  The goal is to show how the unmodeled 
-%    drag causes the filter to diverge from the true solution.
-%
-% 3) The same as 2), but with the addition of process noise during the
-%    covariance propagation phase to illustrate keeping the filter in check.
-%
-% Kurt Motekew  2016/09/28
-%               2016/12/06
+% Kurt Motekew  2016/12/18
 %
 
 close all;
@@ -67,7 +52,8 @@ ntkrs = size(tkrs,2);
   % Tracker accuracy
 srng = .001;                                % Obs standard deviation
 vrng = srng*srng;                           % Obs variance
-W = vrng^-1;                                % Obs weighting "matrix"
+Wsqrt = 1/srng;
+W = Wsqrt*Wsqrt';                           % Obs weighting "matrix"
 
 t0 = 0;                                     % Scenario start time
 tf = 3;                                     % Scenario stop time
@@ -126,78 +112,14 @@ filt_ndxoff = ninit - 1;
 filt_rng = ninit:(filt_ndxoff + nfilt);
 
   %
-  % Batch method - observation model only
-  % Note offset in observation indexing
-  %
-
-for ii = 2:nfilt
-  [x(1:3,ii), P(1:3,1:3,ii)] = box_locate(tkrs, z(:,ii+filt_ndxoff)', W);
-  x_0(:,1) = x_0(:,2);
-  x_0(:,2) = x_0(:,3);
-  x_0(:,3) = x(1:3,ii);
-  P_0(:,:,1) = P_0(:,:,2);
-  P_0(:,:,2) = P_0(:,:,3);
-  P_0(:,:,3) = P(1:3,1:3,ii);
-  [x(4:6,ii), P(4:6,4:6,ii)] = traj_pos2vel(dt, x_0(:,1),  P_0(:,:,1),...
-                                                x_0(:,2),  P_0(:,:,2),...
-                                                x_0(:,3),  P_0(:,:,3));
-end
-res_plot('WLS', t(filt_rng), x_true(:,filt_rng), x, P);
-  % Plot geometry
-traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('WLS Trajectory');
-view([70 20]);
-
-  %
   % 'a priori' estimate and covariance to prime filters
   %
 
 x_hat0 = x(:,1);                            % 'a priori' estimate and
-P_hat0 = P(:,:,1);                           % covariance
+P_hat0 = P(:,:,1);                          % covariance
 
   %
-  % Linearized extended filter (via U-D method)
-  % Nonlinear yet simple analytic trajectory for state propagation.
-  % State vector of position and velocity - no acceleration terms in
-  % the state transition matrix
-  %
-
-x_hat = x_hat0;
-P_hat = P_hat0;
-[U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
-x = zeros(6,nfilt);                         % Reset stored estimates
-P = zeros(6,6,nfilt);
-x(:,1) = x_hat;                             % Set first estimate to
-P(:,:,1) = P_hat;                           % 'a priori' values
-Phi = traj_strans(dt);                      % Fixed state transition matrix
-for ii = 2:nfilt
-    % First propagate state and covariance to new time - no process noise
-  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
-  vel = traj_vel(dt, x_hat(4:6));
-  x_bar = [pos ; vel];
-  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, 0, zeros(6,1));
-  
-    % Obs update based on observed (z) vs. computed (zc) residual (r)
-  for jj = 1:ntkrs
-    Ax = zeros(1,6);
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
-    zc = norm(x_bar(1:3) - tkrs(:,jj));
-    r = z(jj,ii+filt_ndxoff) - zc;
-    [x_hat, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);
-    x_bar = x_hat;
-  end
-  P_hat = U*D*U';
-  x(:,ii) = x_hat;
-  P(:,:,ii) = P_hat;
-end
-res_plot('Linearized Extended UD', t(filt_rng), x_true(:,filt_rng), x, P);
-  % Plot geometry
-traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended UD Trajectory');
-view([70 20]);
-
-  %
-  % Linearized extended filter (via U-D method) with covariance inflation
+  % Linearized extended filter via U-D method with covariance inflation
   % Nonlinear yet simple analytic trajectory for state propagation.
   % State vector of position and velocity - no acceleration terms in
   % the state transition matrix
@@ -240,4 +162,56 @@ res_plot('Linearized Extended UD with Q',...
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('Linearized Extended UD Trajectory with Q');
+view([70 20]);
+
+  %
+  % Householder SRIF
+  %
+
+x_hat = x_hat0;
+P_hat = P_hat0;
+ATA = P_hat^-1;
+R = mth_sqrtm(ATA);
+b = R*x_hat;                                % Lazy, properly size b of zeros
+b = 0*b;                                    % Differentials, not absolutes
+x = zeros(6,nfilt);                         % Reset stored estimates
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;                             % Set first estimate to
+P(:,:,1) = P_hat;                           % 'a priori' values
+Phi = traj_strans(dt);                      % Fixed state transition matrix
+PhiInv = Phi^-1;                            % Inverse for SRIF propagation
+  % Fixed process noise
+Q = diag((2*global_b)^2);
+RwInv = sqrtm(Q);
+Rw = RwInv^-1;
+for ii = 2:nfilt
+    % First propagate state and information array to new time - add
+    % process noise when propagating information array
+  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
+  vel = traj_vel(dt, x_hat(4:6));
+  x_bar = [pos ; vel];
+  G = -[.5*vel*dt ; vel]*dt;
+  [R, b] = est_pred_hhsrif(R, b, PhiInv, Rw, G);
+  b = 0*b;
+    % Obs update based on observed (z) vs. computed (zc) residual (r)
+  for jj = 1:ntkrs
+    Ax = zeros(1,6);
+    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
+    zc = norm(x_bar(1:3) - tkrs(:,jj));
+    r = z(jj,ii+filt_ndxoff) - zc;
+    [dx, R, b, ~] = est_upd_hhsrif(R, b, Ax, r, Wsqrt);
+    b = 0*b;
+    x_bar = x_bar + dx;
+  end
+  x_hat = x_bar;
+  Rinv = mth_triinv(R);
+  P_hat = Rinv*Rinv';
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+res_plot('Linearized Extended SRIF with Q',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('Linearized Extended SRIF Trajectory with Q');
 view([70 20]);

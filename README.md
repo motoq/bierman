@@ -28,7 +28,7 @@ containment is also output.
 driver_02b.m
 ```
 Performs speed comparisons of the stabilized the U-D and SRIF
-methods.  Percent containment is also outout.
+methods.  Percent containment is also output.
 ```
 
 driver_householder.m - detour
@@ -66,4 +66,13 @@ Adds drag to the truth model for driver_03 while leaving it out of the
 filter model.  Illustrates divergence in the filter and how to fix it
 with the inclusion of process noise.
 ```
+
+driver_04b.m
+```
+The same scenario as driver_04.m where the truth model includes drag and
+the filter model doesn't.  Here, the U-D and SRIF methods are compares
+where both incorporate process noise to account for the unmodeled drag
+effect.
+```
+
 

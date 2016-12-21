@@ -22,7 +22,7 @@ function [xhat, Rhat, zhat, e] = est_upd_hhsrif(R0, z0, A, z, SqrtW)
 %   xhat     Updated estimated, [Nx1]
 %   Rhat     Updated R0, upper triangular, [NxN]
 %   zhat     Updated z0, [Nx1]
-%   e        Residual, [(M-N)x1]
+%   e        Sum of square of residuals, scalar
 %
 % Kurt Motekew   2016/08/11
 %
@@ -40,6 +40,6 @@ function [xhat, Rhat, zhat, e] = est_upd_hhsrif(R0, z0, A, z, SqrtW)
   m = size(z,1);
   Rhat = R_z_hat(1:n,1:n);
   zhat = R_z_hat(1:n,(n+1));
-  e = R_z_hat((n+1),(n+1):m);
+  e = sum(R_z_hat((n+1),(n+1):m));
   
   xhat = mth_trisol(Rhat, zhat);
