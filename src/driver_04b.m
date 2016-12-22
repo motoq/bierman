@@ -14,7 +14,10 @@
 % inclusion method via Householder transformations is implemented.
 % As before, the "true" trajectory based on integrating a simple flat earth
 % gravity model with a fixed drag coefficient while the filter uses an ideal
-% model that lacks drag.
+% model that lacks drag.  Two versions of the SRIF method are illustrated.
+% The first performs a separate measurement update for each individual
+% observation in a set (instant in time).  The second processes all
+% observations at an instant in time at once.
 %
 % Kurt Motekew  2016/12/18
 %
@@ -214,4 +217,57 @@ res_plot('Linearized Extended SRIF with Q',...
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('Linearized Extended SRIF Trajectory with Q');
+view([70 20]);
+
+  %
+  % Householder Measurement Set Batch SRIF
+  %
+
+x_hat = x_hat0;
+P_hat = P_hat0;
+ATA = P_hat^-1;
+R = mth_sqrtm(ATA);
+b = R*x_hat;                                % Lazy, properly size b of zeros
+b = 0*b;                                    % Differentials, not absolutes
+x = zeros(6,nfilt);                         % Reset stored estimates
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;                             % Set first estimate to
+P(:,:,1) = P_hat;                           % 'a priori' values
+Phi = traj_strans(dt);                      % Fixed state transition matrix
+PhiInv = Phi^-1;                            % Inverse for SRIF propagation
+  % Fixed process noise
+Q = diag((2*global_b)^2);
+RwInv = sqrtm(Q);
+Rw = RwInv^-1;
+WsqrtSet = Wsqrt*eye(ntkrs);
+Ax = zeros(ntkrs,6);
+r = zeros(ntkrs,1);
+for ii = 2:nfilt
+    % First propagate state and information array to new time - add
+    % process noise when propagating information array
+  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
+  vel = traj_vel(dt, x_hat(4:6));
+  x_bar = [pos ; vel];
+  G = -[.5*vel*dt ; vel]*dt;
+  [R, b] = est_pred_hhsrif(R, b, PhiInv, Rw, G);
+  b = 0*b;
+    % Obs update based on observed (z) vs. computed (zc) residual (r)
+  for jj = 1:ntkrs
+    Ax(jj,1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
+    zc = norm(x_bar(1:3) - tkrs(:,jj));
+    r(jj) = z(jj,ii+filt_ndxoff) - zc;
+  end
+  [dx, R, b, ~] = est_upd_hhsrif(R, b, Ax, r, WsqrtSet);
+  b = 0*b;
+  x_hat = x_bar + dx;
+  Rinv = mth_triinv(R);
+  P_hat = Rinv*Rinv';
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+res_plot('Linearized Extended Batch SRIF with Q',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('Linearized Extended Batch SRIF Trajectory with Q');
 view([70 20]);
