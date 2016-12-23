@@ -1,4 +1,4 @@
-function [xbar, Ubar, Dbar] = est_pred_ud(xhat, Uhat, Dhat, Phi, Q, G)
+function [x, U, D] = est_pred_ud(x, U, D, Phi, Q, G)
 % EST_PRE_UD Updates a prior estimate's U-D covariance given a state
 % transition matrix and process noise matrix.  The decomposed form is
 % such that
@@ -16,17 +16,17 @@ function [xbar, Ubar, Dbar] = est_pred_ud(xhat, Uhat, Dhat, Phi, Q, G)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   xhat      A priori estimate, [nx1]
-%   Uhat      A priori U matrix, [nxn]
-%   Dhat      A priori D matrix, [nxn]
+%   x         A priori estimate, [nx1]
+%   U         A priori U matrix, [nxn]
+%   D         A priori D matrix, [nxn]
 %   Phi       State transition matrix, [nxn]
 %   Q         Process noise matrix, DIAGONAL of square mxm matrix, [1xm] 
 %   G         Partials of estimate w.r.t. process noise, dx/dq, [nxm]
 %
 % Return:
-%   xbar   Updated estimated, [nx1]
-%   Ubar   Updated U, [nxn]
-%   Dbar   Updated D, [nxn]
+%   x      Updated estimated, [nx1]
+%   U      Updated U, [nxn]
+%   D      Updated D, [nxn]
 %
 % Kurt Motekew   2016/12/14
 %
@@ -41,27 +41,24 @@ function [xbar, Ubar, Dbar] = est_pred_ud(xhat, Uhat, Dhat, Phi, Q, G)
 %         a form that could be represented in terms of matrix algebra.
 %
 
-  xbar = Phi*xhat;
+  x = Phi*x;
 
     % Get matrix sizes for looping
-  n = size(Uhat,1);                         % Number of solve for
+  n = size(U,1);                            % Number of solve for
   m = size(Q,2);                            % Number of consider parameters
   N = n + m;
 
-  A = [ Phi*Uhat G]';                       % [Nxn], a_j = A(:,j)
+  A = [ Phi*U G]';                          % [Nxn], a_j = A(:,j)
   Dtmp((n+1):N,(n+1):N) = diag(Q);          % [NxN]
-  Dtmp(1:n,1:n) = Dhat;
+  Dtmp(1:n,1:n) = D;
 
-    % Could reuse Uhat and Dhat
-  Ubar = eye(n);
-  Dbar = zeros(n);
   for ii = n:-1:1
     c = Dtmp*A(:,ii);
-    Dbar(ii,ii) = A(:,ii)'*c;
-    d = c/Dbar(ii,ii);
+    D(ii,ii) = A(:,ii)'*c;
+    d = c/D(ii,ii);
     for jj = 1:n
-      Ubar(jj,ii) = A(:,jj)'*d;
-      A(:,jj) = A(:,jj) - Ubar(jj,ii)*A(:,ii);
+      U(jj,ii) = A(:,jj)'*d;
+      A(:,jj) = A(:,jj) - U(jj,ii)*A(:,ii);
     end
   end
 

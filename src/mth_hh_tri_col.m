@@ -17,6 +17,9 @@ function [TA] = mth_hh_tri_col(A)
 %   TA  A with the first column Triangularized, [MxN] matrix.
 %
 % Author:  Kurt Motekew    20160809
+%          Kurt Motekew    20161222  Vectorized some stuff but left and
+%                                    commented out original for ease of
+%                                    translation to other languages.
 % 
 
   [m, n] = size(A);
@@ -25,10 +28,11 @@ function [TA] = mth_hh_tri_col(A)
   u = zeros(1,m);
 
     % Diagonal
-  rssa = 0;
-  for ii = 1:m
-    rssa = rssa + A(ii,1)*A(ii,1);
-  end
+  %rssa = 0;
+  %for ii = 1:m
+  %  rssa = rssa + A(ii,1)*A(ii,1);
+  %end
+  rssa = sum(A(:,1).*A(:,1));
   rssa = sqrt(rssa);
   s = -sign(A(1,1))*rssa;
   TA(1,1) = s;
@@ -40,9 +44,10 @@ function [TA] = mth_hh_tri_col(A)
 
     % Reflect about u
   u(1) = A(1,1) - s;
-  for ii = 2:m
-    u(ii) = A(ii,1);
-  end
+  u(2:m) = A(2:m,1)';
+  %for ii = 2:m
+  %  u(ii) = A(ii,1);
+  %end
   beta = 1/(s*u(1));
 
   for jj = 2:n
