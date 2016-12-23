@@ -33,8 +33,9 @@ function [R, b] = est_pred_hhsrif(R, b, PhiInv, Rw, G)
   n = size(R,2);                            % Number of solve for
   m = size(Rw,1);                           % Number of consider parameters
 
+  R = R*PhiInv;
   A = [ Rw           zeros(m,n)  zeros(m,1) ;
-        R*PhiInv*G   R*PhiInv    b           ];
+       -R*G          R           b           ];
     % Perform m transformations
   Ahat = mth_householder_tri(A, n+1);
 
