@@ -142,16 +142,15 @@ for ii = 2:nfilt
   Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
   [~, U, D] = est_pred_ud(x_hat, U, D, Phi, Q, G);
-  
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
     Ax = zeros(1,6);
     Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
     zc = norm(x_bar(1:3) - tkrs(:,jj));
     r = z(jj,ii+filt_ndxoff) - zc;
-    [x_hat, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);
-    x_bar = x_hat;
+    [x_bar, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);
   end
+  x_hat = x_bar;
   P_hat = U*D*U';
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;

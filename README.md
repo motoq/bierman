@@ -75,4 +75,14 @@ where both incorporate process noise to account for the unmodeled drag
 effect.
 ```
 
+driver_04c.m
+```
+One obs, U-D, SRIF, QR/HH SRIF
+```
+
+driver_04d.m
+```
+Kal batch, U-D single obs, SRIF, QR/HH SRIF
+```
+
 
