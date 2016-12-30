@@ -329,7 +329,7 @@ view([70 20]);
 
 fprintf('\n U-D Time:\t\t%1.4f seconds', ud_time);
 fprintf('\n HH Time:\t\t%1.4f seconds', hh_time);
-fprintf('\n Hybrid SRIF Time:\t\t%1.4f seconds', qrhh_time);
+fprintf('\n Hybrid SRIF Time:\t%1.4f seconds', qrhh_time);
 fprintf('\n Hybrid Batch Time:\t%1.4f seconds', qrhhb_time);
 fprintf('\n');
 
