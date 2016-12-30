@@ -92,3 +92,10 @@ and hybrid SRIF.  The Kalman and U-D methods process one observation at
 a time while the SRIF process measurement sets in batch mode.
 ```
 
+driver_05.m
+```
+The stabilized Kalman, U-D, and hybrid SRIF are run with process noise
+and process noise compensation along with biased tracker locations
+that are not compensated for.
+```
+
