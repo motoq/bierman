@@ -13,6 +13,7 @@
 % to the standard and a hybrid QR/Householder SRIF solution where both
 % methods process one observation at a time and propagate the covariance
 % while including systematic error effect from the filter ignoring drag.
+% The Hybrid SRIF processing observation sets as batches is also run.
 %
 % Kurt Motekew  2016/12/22
 %
@@ -264,11 +265,11 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 qrhh_time = toc;
-res_plot('Linearized Extended QR/HH SRIF with Q',...
+res_plot('Linearized Extended Hybrid SRIF with Q',...
          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended QR/HH SRIF Trajectory with Q');
+title('Linearized Extended Hybrid SRIF Trajectory with Q');
 view([70 20]);
 
   %
@@ -319,16 +320,16 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 qrhhb_time = toc;
-res_plot('Linearized Extended Batch SRIF with Q',...
+res_plot('Linearized Extended Batch Hybrid SRIF with Q',...
          t(filt_rng), x_true(:,filt_rng), x, P);    
   % Plot geometry                               
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended Batch SRIF Trajectory with Q');
+title('Linearized Extended Batch Hybrid SRIF Trajectory with Q');
 view([70 20]);
 
 fprintf('\n U-D Time:\t\t%1.4f seconds', ud_time);
 fprintf('\n HH Time:\t\t%1.4f seconds', hh_time);
-fprintf('\n QR/HH Time:\t\t%1.4f seconds', qrhh_time);
-fprintf('\n QR/HH Batch Time:\t%1.4f seconds', qrhhb_time);
+fprintf('\n Hybrid SRIF Time:\t\t%1.4f seconds', qrhh_time);
+fprintf('\n Hybrid Batch Time:\t%1.4f seconds', qrhhb_time);
 fprintf('\n');
 

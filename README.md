@@ -77,12 +77,18 @@ effect.
 
 driver_04c.m
 ```
-One obs, U-D, SRIF, QR/HH SRIF
+A hybrid version of the SRIF is implemented where QR factorization via
+modified Gram-Schmidt (MGS) decomposition is used for the observation
+updates while Householder reflections are used for the prediction.  The
+U-D, SRIF, and hybrid SRIF methods are compared processing one
+observation at a time.  The hybrid method is also run where observation
+sets are processed in batches.
 ```
 
 driver_04d.m
 ```
-Kal batch, U-D single obs, SRIF, QR/HH SRIF
+The stabilized Kalman form is revisited and compared to the U-D method
+and hybrid SRIF.  The Kalman and U-D methods process one observation at
+a time while the SRIF process measurement sets in batch mode.
 ```
-
 
