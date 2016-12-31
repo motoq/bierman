@@ -250,7 +250,7 @@ for ii = 2:nfilt
     zc = norm(x_bar(1:3) - tkrs(:,jj));
     r(jj) = z(jj,ii+filt_ndxoff) - zc;
   end
-  [dx, R, b] = est_upd_qrsrif(R, b, Ax, r, WsqrtSet);
+  [dx, R, b, ~] = est_upd_hhsrif(R, b, Ax, r, WsqrtSet);
   b = 0*b;
   x_hat = x_bar + dx;
   Rinv = mth_triinv(R);

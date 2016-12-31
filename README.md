@@ -27,7 +27,7 @@ containment is also output.
 
 driver_02b.m
 ```
-Performs speed comparisons of the stabilized the U-D and SRIF
+Performs speed comparisons of the stabilized the Kalman, U-D, and SRIF
 methods.  Percent containment is also output.
 ```
 
