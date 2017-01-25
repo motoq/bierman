@@ -165,10 +165,7 @@ title('Linearized Extended Kalman Trajectory with Q & C');
 view([70 20]);
 
   %
-  % Linearized extended filter via U-D method with covariance inflation
-  % Nonlinear yet simple analytic trajectory for state propagation.
-  % State vector of position and velocity - no acceleration terms in
-  % the state transition matrix
+  % U-D
   %
 
 x_hat = x_hat0;
