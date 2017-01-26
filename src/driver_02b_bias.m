@@ -31,7 +31,7 @@ tkrs = [                                    % uncertainty
          0       blen    blen
       ]';
 nmeas = size(tkrs,2);                        % Batch init
-nmeas2 = 100;                                % Sequential obs, static
+nmeas2 = 20;                                % Sequential obs, static
 
   % Tracker accuracy
 srng = .001;
@@ -113,10 +113,10 @@ for jj = 1:ntest
 
     % SRIF with Bias
   phat_srifb = phat_srif0;
-  Rb = R0;
+  Rx = R0;
   Rxy = zeros(3,3);                 % 3 solve for, 3 pos bias per obs
   z = z0;
-  Ry0 = sqrtm((SigmaBlen*eye(3))^-1);
+  Ry = sqrtm((SigmaBlen*eye(3))^-1);
   zy = zeros(3,1);
   tic;
   for ii = 1:nmeas2
@@ -128,8 +128,8 @@ for jj = 1:ntest
     yc = norm(phat_srifb - tkrs(:,itkr));
     r = y2(ii) - yc;
     Ay = est_drng_dpos(tkrs(:,itkr), phat_srifb);
-    [dp, Rb, Rxy, z, Ry, zy] = est_upd_hhsrif_bias(Rb, Rxy, z, Ap, r, Wsqrt,...
-                                                               Ry0, zy, Ay);
+    [dp, Rx, Rxy, z, Ry, zy] = est_upd_hhsrif_bias(Rx, Rxy, z, Ap, r, Wsqrt,...
+                                                               Ry, zy, Ay);
     z = 0*z;
     phat_srifb = phat_srifb + dp;
   end
@@ -174,10 +174,11 @@ for jj = 1:ntest
     contained_3d_srif = contained_3d_srif + 1;
   end
   miss_srifb(jj) = norm(phat_srifb - rho);
-  Rbinv = mth_triinv(Rb);
-  Ryinv = mth_triinv(Ry);
-  SigmaSRIFB = Rbinv*Rbinv' + Ryinv*Ryinv';
-  if (SF95_3D > mth_mahalanobis(rho, phat_srifb, SigmaSRIFB))
+  Rn = [ Rx Rxy ; zeros(3) Ry ];
+  Rninv = mth_triinv(Rn);
+  Pn = Rninv*Rninv';
+  SigmaX = Pn(1:3,1:3);
+  if (SF95_3D > mth_mahalanobis(rho, phat_srifb, SigmaX))
     contained_3d_srifb = contained_3d_srifb + 1;
   end
   miss_srif_sch(jj) = norm(phat_srif_sch - rho);
@@ -196,13 +197,11 @@ p95_3d_srif_sch = 100*contained_3d_srif_sch/ntest;
 p95_3d_srif_batch = 100*contained_3d_srif_batch/ntest;
 
 figure; hold on;
-plot(testnum, miss_srif, 's', testnum, miss_srifb, 'x');
-legend('SRIF', 'SRIF B');
-%plot(testnum, miss_srif, 's', testnum, miss_srifb, 'x',...
-%     testnum, miss_srif_sch, '*', testnum, miss_srif_batch, 'o');
+plot(testnum, miss_srif, 's', testnum, miss_srifb, 'x',...
+     testnum, miss_srif_sch, '*', testnum, miss_srif_batch, 'o');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-%legend('SRIF', 'SRIF B', 'Schmidt SRIF', 'Full Batch');
+legend('SRIF', 'SRIF B', 'Schmidt SRIF', 'Full Batch');
 
 fprintf('\nSRIF containment: %1.1f', p95_3d_srif);
 fprintf(' in %1.4f seconds', srif_time);
