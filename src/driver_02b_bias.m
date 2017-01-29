@@ -178,6 +178,9 @@ for jj = 1:ntest
   Rninv = mth_triinv(Rn);
   Pn = Rninv*Rninv';
   SigmaX = Pn(1:3,1:3);
+  %Pxy =  Pn(1:3,4:6);
+  Pny = Pn(4:6,4:6);
+  SigmaX = SigmaX + Pny;  % How to map for non-identity obs/solve for
   if (SF95_3D > mth_mahalanobis(rho, phat_srifb, SigmaX))
     contained_3d_srifb = contained_3d_srifb + 1;
   end
