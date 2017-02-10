@@ -1,6 +1,6 @@
 function [xhat, Rxhat, Rxyhat, zxhat, Ryhat, zyhat] =...
                        est_upd_hhsrif_bias(Rx, Rxy, zx, Ax, z, SqrtW,...
-                                            Ry, zy, Ay)
+                                           Ry, zy, Ay)
 % EST_UPD_HHSRIF_BIAS Updates the apriori estimate and covariance via a
 % SRIF using Householder triangularization given a new set of observations
 % and bias statistics
@@ -16,8 +16,8 @@ function [xhat, Rxhat, Rxyhat, zxhat, Ryhat, zyhat] =...
 % Inputs:
 %   Rx        A priori triangularized information array, obs w.r.t. solve
 %             for x, [NxN], N solve for
-%   Rxy       A priori cross correlation resulting from previous calls
-%             to this function, [NxNy]
+%   Rxy       A priori cross correlation partials, resulting from previous
+%             calls to this function, [NxNy]
 %   zx        A priori compressed obs, [Nx1]
 %   Ax        Partial of obs w.r.t. current estimate, [MxN]
 %   z         Observation vector, [Mx1]
@@ -36,36 +36,40 @@ function [xhat, Rxhat, Rxyhat, zxhat, Ryhat, zyhat] =...
 %   zyhat    pdated y
 %   e        Sum of square of residuals, scalar
 %
-% Kurt Motekew   2017/01/25
+% Kurt Motekew   2017/01/22
 %
 %
-% Ref:  
+% Ref:  G. J. Bierman, Factorization Methods for
+%       Discrete Sequential Estimation, Dover Publications, Inc.,
+%       Mineola, NY, 1977, pp. 71-72.
 %
 
     % Normalize when forming info array, Covariance obs = I
   [nx, ny] = size(Rxy);
 
-  Rxyz = [ Rx  Rxy  zx ; zeros(ny,nx) Ry zy ; SqrtW*Ax Ay SqrtW*z ];
-  Rxyz_hat = mth_householder_tri(Rxyz, 1);
-
+  Rxyz = [ Rx Rxy zx ;  SqrtW*Ax SqrtW*Ay SqrtW*z ];
+  Rxyz_hat = mth_householder_tri(Rxyz, ny+1);
   rows = 1:nx;
   cols = 1:nx;
   Rxhat = Rxyz_hat(rows,cols);
-  cols = (1:ny) + nx;
+  cols = (nx+1):(nx+ny);
   Rxyhat = Rxyz_hat(rows,cols);
   cols = nx + ny + 1;
   zxhat = Rxyz_hat(rows,cols);
+  xhat   = mth_trisol(Rxhat, zxhat);
 
-  rows = (1:ny) + nx;
-  cols = rows;
-  Ryhat = Rxyz_hat(rows,cols);
+  m = size(z,1);
+  rows = (1:m) + nx;
+  cols = (1:ny) + nx;
+  Ayhat = Rxyz_hat(rows,cols);
   cols = nx + ny + 1;
-  zyhat = Rxyz_hat(rows,cols);
+  zhat = Rxyz_hat(rows,cols);
+  Ryz = [ Ry zy ; Ayhat zhat ];
+  Ryz_hat = mth_householder_tri(Ryz, 1);
+  Ryhat = Ryz_hat(1:ny,1:ny);
+  zyhat = Ryz_hat(1:ny,ny+1);
 
-  %m = size(z,1);
-  %rows = (1:m) + nx + ny;
-  %e = norm(Rxyz_hat(rows,cols));
-
+  Rxhatinv = mth_triinv(Rxhat);
+  Shat = -Rxhatinv*Rxyhat;
   yhat = mth_trisol(Ryhat, zyhat);
-  xhat = mth_trisol(Rxhat, zxhat - Rxy*yhat);
-
+  xhat = xhat + Shat*yhat;

@@ -15,7 +15,7 @@ function Phi = traj_strans(dt)
 %   dt   Change in time from 
 %
 % Return:
-%   Phi   [3x3] State transition matrix, dx_new/dx_old, x = [pos ; vel]
+%   Phi   [6x6] State transition matrix, dx_new/dx_old, x = [pos ; vel]
 %
 % Kurt Motekew   2016/11/22
 %

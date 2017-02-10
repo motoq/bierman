@@ -92,10 +92,12 @@ for jj = 1:ntest
   % Updates
   %
 
-    % SRIF
+    % SRIF with 'a posteriori' bias inflation
   phat_srif = phat_srif0;
   R = R0;
   z = z0;
+  W = Wsqrt*Wsqrt';  % apost
+  ApTWAy = zeros(3); % apost
   tic;
   for ii = 1:nmeas2
     itkr = mod(ii,nmeas);
@@ -103,6 +105,8 @@ for jj = 1:ntest
       itkr = nmeas;
     end
     Ap = est_drng_dloc(tkrs(:,itkr), phat_srif);
+    Ay = est_drng_dpos(tkrs(:,itkr), phat_srif);
+    ApTWAy = ApTWAy + Ap'*W*Ay;
     yc = norm(phat_srif - tkrs(:,itkr));
     r = y2(ii) - yc;
     [dp, R, z, ~] = est_upd_hhsrif(R, z, Ap, r, Wsqrt);
@@ -125,12 +129,13 @@ for jj = 1:ntest
       itkr = nmeas;
     end
     Ap = est_drng_dloc(tkrs(:,itkr), phat_srifb);
+    Ay = est_drng_dpos(tkrs(:,itkr), phat_srifb);
     yc = norm(phat_srifb - tkrs(:,itkr));
     r = y2(ii) - yc;
-    Ay = est_drng_dpos(tkrs(:,itkr), phat_srifb);
     [dp, Rx, Rxy, z, Ry, zy] = est_upd_hhsrif_bias(Rx, Rxy, z, Ap, r, Wsqrt,...
                                                                Ry, zy, Ay);
     z = 0*z;
+    zy = 0*zy;
     phat_srifb = phat_srifb + dp;
   end
   srifb_time = srifb_time + toc;
@@ -170,17 +175,25 @@ for jj = 1:ntest
     % Get containment stats for each
   miss_srif(jj) = norm(phat_srif - rho);
   Rinv = mth_triinv(R);
-  if (SF95_3D > mth_mahalanobis(rho, phat_srif, Rinv*Rinv'))
+  SigmaX = Rinv*Rinv';
+  SigmaX = SigmaX + SigmaX*ApTWAy*SigmaBlen*eye(3)*ApTWAy'*SigmaX;
+  if (SF95_3D > mth_mahalanobis(rho, phat_srif, SigmaX))
     contained_3d_srif = contained_3d_srif + 1;
   end
   miss_srifb(jj) = norm(phat_srifb - rho);
   Rn = [ Rx Rxy ; zeros(3) Ry ];
   Rninv = mth_triinv(Rn);
-  Pn = Rninv*Rninv';
-  SigmaX = Pn(1:3,1:3);
+  Rinv = Rninv(1:3,1:3);
+  S = -Rinv*Rninv(1:3,4:6);
+  Ryinv = Rninv(4:6,4:6);
+  SigmaX = Rinv*Rinv' + S*Ryinv*Ryinv'*S';
+  %SigmaX = Rinv*Rinv' + S*SigmaBlen*eye(3)*S';
+  %Pn = Rninv*Rninv';
+  %SigmaX = Pn(1:3,1:3);
   %Pxy =  Pn(1:3,4:6);
-  Pny = Pn(4:6,4:6);
-  SigmaX = SigmaX + Pny;  % How to map for non-identity obs/solve for
+  %Pny = Pn(4:6,4:6);
+  %S = -SigmaX*Pxy;
+  %SigmaX = SigmaX + S*Pny*S';  % How to map for non-identity obs/solve for
   if (SF95_3D > mth_mahalanobis(rho, phat_srifb, SigmaX))
     contained_3d_srifb = contained_3d_srifb + 1;
   end
@@ -206,7 +219,7 @@ xlabel('Trial');
 ylabel('RSS Miss Distance');
 legend('SRIF', 'SRIF B', 'Schmidt SRIF', 'Full Batch');
 
-fprintf('\nSRIF containment: %1.1f', p95_3d_srif);
+fprintf('\nSRIF a posteriori containment: %1.1f', p95_3d_srif);
 fprintf(' in %1.4f seconds', srif_time);
 fprintf('\nSRIF B containment: %1.1f', p95_3d_srifb);
 fprintf(' in %1.4f seconds', srifb_time);
