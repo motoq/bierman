@@ -39,7 +39,7 @@ x0 = [0.35 0.25 .25 0.2  0.2  1]';
 
   % Tracker locations
 blen = 1;
-sblen = .003*blen;                          % .3% of total distance for tracker
+sblen = .001*blen;                          % .1% of total distance for tracker
 tkrs = [                                    % uncertainty
          0       0       blen ;
          blen    0       blen ;

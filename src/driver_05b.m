@@ -39,7 +39,7 @@ x0 = [0.35 0.25 .25 0.2  0.2  1]';
 
   % Tracker locations
 blen = 1;
-sblen = .003*blen;                          % .3% of total distance for tracker
+sblen = .001*blen;                          % .1% of total distance for tracker
 SigmaBlen = sblen*sblen;
 ny = 3;
 tkrs = [                                    % uncertainty
@@ -123,8 +123,7 @@ x_hat0 = x(:,1);                            % 'a priori' estimate and
 P_hat0 = P(:,:,1);                          % covariance
 
   %
-  % Linearized extended filter via Kalman stabilized method with Schmidt
-  % consider
+  % Linearized extended Schmidt Kalman filter
   %
 
 x_hat = x_hat0;
@@ -134,6 +133,8 @@ P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
+SigmaZ = vrng;
+SigmaY = SigmaBlen*ones(ny);
 tic;
 for ii = 2:nfilt
     % First propagate state and covariance to new time - add
@@ -144,24 +145,31 @@ for ii = 2:nfilt
   %Q = (.5*global_b)^2;
   Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
-  P_bar = Phi*P_hat*Phi' + G*Q*G';
+  SigmaX = Phi*P_hat*Phi' + G*Q*G';
+  SigmaXY = zeros(6,ny);
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
     Ax = zeros(1,6);
     Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
     Ay = est_drng_dpos(tkrs(:,jj), x_bar(1:3));
-    Wsqrt_schmidt = sqrtm((vrng + Ay*SigmaBlen*ones(ny)*Ay')^-1);
+    K = (SigmaX*Ax' + SigmaXY*Ay')*...
+        (Ax*SigmaX*Ax' + Ax*SigmaXY*Ay' + Ay*SigmaXY'*Ax' +...
+                                          Ay*SigmaY*Ay' + SigmaZ)^-1;
     zc = norm(x_bar(1:3) - tkrs(:,jj));
     r = z(jj,ii+filt_ndxoff) - zc;
-    [x_bar, P_bar] = est_upd_kalman(x_bar, P_bar, Ax, r, Wsqrt_schmidt);
+    dx = K*r;
+    x_bar = x_bar + dx;
+    JF = eye(6) - K*Ax;
+    SigmaX = JF*SigmaX - K*Ay*SigmaXY';
+    SigmaXY = JF*SigmaXY - K*Ay*SigmaY;
   end
   x_hat = x_bar;
-  P_hat = P_bar;
+  P_hat = SigmaX;
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
 kal_time = toc;
-res_plot('Linearized Extended Kalman with Q & Y',...
+res_plot('Linearized Extended Schmidt Consider Kalman',...
          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
