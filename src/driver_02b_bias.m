@@ -42,15 +42,12 @@ y2(nmeas2) = 0;
 testnum = 1:ntest;
 miss_srif = zeros(1,ntest);
 miss_srifb = zeros(1,ntest);
-miss_srif_sch = zeros(1,ntest);
 miss_srif_batch = zeros(1,ntest);
 contained_3d_srif = 0;
 contained_3d_srifb = 0;
-contained_3d_srif_sch = 0;
 contained_3d_srif_batch = 0;
 srif_time = 0;
 srifb_time = 0;
-srif_sch_time = 0;
 srif_batch_time = 0;
 
 tkr_pos_all = zeros(3,nmeas+nmeas2);
@@ -137,29 +134,10 @@ for jj = 1:ntest
     z = 0*z;
     zy = 0*zy;
     phat_srifb = phat_srifb + dp;
+
+
   end
   srifb_time = srifb_time + toc;
-
-    % SRIF with Schmidt mapping
-  phat_srif_sch = phat_srif0;
-  Rsch = R0;
-  z = z0;
-  tic;
-  for ii = 1:nmeas2
-    itkr = mod(ii,nmeas);
-    if itkr == 0
-      itkr = nmeas;
-    end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_srif_sch);
-    yc = norm(phat_srif_sch - tkrs(:,itkr));
-    r = y2(ii) - yc;
-    Aq = est_drng_dpos(tkrs(:,itkr), phat_srif_sch);
-    Wsqrt = sqrtm((SigmaRng + Aq*SigmaBlen*Aq')^-1);
-    [dp, Rsch, z, ~] = est_upd_hhsrif(Rsch, z, Ap, r, Wsqrt);
-    z = 0*z;
-    phat_srif_sch = phat_srif_sch + dp;
-  end
-  srif_sch_time = srif_sch_time + toc;
 
     % SRIF full batch
   tic;
@@ -181,26 +159,18 @@ for jj = 1:ntest
     contained_3d_srif = contained_3d_srif + 1;
   end
   miss_srifb(jj) = norm(phat_srifb - rho);
-  Rn = [ Rx Rxy ; zeros(3) Ry ];
+
+  Rn = [ Rx Rxy ; zeros(3,3) Ry ];
   Rninv = mth_triinv(Rn);
-  Rinv = Rninv(1:3,1:3);
-  S = -Rinv*Rninv(1:3,4:6);
-  Ryinv = Rninv(4:6,4:6);
-  SigmaX = Rinv*Rinv' + S*Ryinv*Ryinv'*S';
-  %SigmaX = Rinv*Rinv' + S*SigmaBlen*eye(3)*S';
-  %Pn = Rninv*Rninv';
-  %SigmaX = Pn(1:3,1:3);
-  %Pxy =  Pn(1:3,4:6);
-  %Pny = Pn(4:6,4:6);
-  %S = -SigmaX*Pxy;
-  %SigmaX = SigmaX + S*Pny*S';  % How to map for non-identity obs/solve for
+  Rxinv = Rninv(1:3,1:3);
+  S = -Rxinv*Rxy;
+  Pn = Rninv*Rninv';
+  Px = Pn(1:3,1:3);
+  Py = Pn(4:6,4:6);
+  SigmaX = Px + S*Py*S';
+
   if (SF95_3D > mth_mahalanobis(rho, phat_srifb, SigmaX))
     contained_3d_srifb = contained_3d_srifb + 1;
-  end
-  miss_srif_sch(jj) = norm(phat_srif_sch - rho);
-  Rinv = mth_triinv(Rsch);
-  if (SF95_3D > mth_mahalanobis(rho, phat_srif_sch, Rinv*Rinv'))
-    contained_3d_srif_sch = contained_3d_srif_sch + 1;
   end
   miss_srif_batch(jj) = norm(phat_batch - rho);
   if (SF95_3D > mth_mahalanobis(rho, phat_batch, SigmaP_batch))
@@ -209,22 +179,19 @@ for jj = 1:ntest
 end
 p95_3d_srif = 100*contained_3d_srif/ntest;
 p95_3d_srifb = 100*contained_3d_srifb/ntest;
-p95_3d_srif_sch = 100*contained_3d_srif_sch/ntest;
 p95_3d_srif_batch = 100*contained_3d_srif_batch/ntest;
 
 figure; hold on;
 plot(testnum, miss_srif, 's', testnum, miss_srifb, 'x',...
-     testnum, miss_srif_sch, '*', testnum, miss_srif_batch, 'o');
+                              testnum, miss_srif_batch, 'o');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('SRIF', 'SRIF B', 'Schmidt SRIF', 'Full Batch');
+legend('SRIF', 'SRIF B', 'Full Batch');
 
 fprintf('\nSRIF a posteriori containment: %1.1f', p95_3d_srif);
 fprintf(' in %1.4f seconds', srif_time);
 fprintf('\nSRIF B containment: %1.1f', p95_3d_srifb);
 fprintf(' in %1.4f seconds', srifb_time);
-fprintf('\nSch SRIF containment: %1.1f', p95_3d_srif_sch);
-fprintf(' in %1.4f seconds', srif_sch_time);
 fprintf('\nFull Batch SRIF containment: %1.1f', p95_3d_srif_batch);
 fprintf(' in %1.4f seconds', srif_batch_time);
 

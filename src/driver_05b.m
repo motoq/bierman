@@ -135,6 +135,7 @@ P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
 SigmaZ = vrng;
 SigmaY = SigmaBlen*ones(ny);
+SigmaXY = zeros(6,ny);
 tic;
 for ii = 2:nfilt
     % First propagate state and covariance to new time - add
@@ -146,25 +147,20 @@ for ii = 2:nfilt
   Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
   SigmaX = Phi*P_hat*Phi' + G*Q*G';
-  SigmaXY = zeros(6,ny);
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
     Ax = zeros(1,6);
     Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
     Ay = est_drng_dpos(tkrs(:,jj), x_bar(1:3));
-    K = (SigmaX*Ax' + SigmaXY*Ay')*...
-        (Ax*SigmaX*Ax' + Ax*SigmaXY*Ay' + Ay*SigmaXY'*Ax' +...
-                                          Ay*SigmaY*Ay' + SigmaZ)^-1;
     zc = norm(x_bar(1:3) - tkrs(:,jj));
     r = z(jj,ii+filt_ndxoff) - zc;
-    dx = K*r;
-    x_bar = x_bar + dx;
-    JF = eye(6) - K*Ax;
-    SigmaX = JF*SigmaX - K*Ay*SigmaXY';
-    SigmaXY = JF*SigmaXY - K*Ay*SigmaY;
+    [x_bar, SigmaX, SigmaXY] = est_upd_schmidt(x_bar, SigmaX, Ax,...
+                                                      SigmaY, Ay,...
+                                                      SigmaXY, r, SigmaZ);
   end
   x_hat = x_bar;
   P_hat = SigmaX;
+  SigmaXY = 0.7*SigmaXY;
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
