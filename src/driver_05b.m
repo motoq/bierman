@@ -240,7 +240,8 @@ WsqrtSet = Wsqrt*eye(ntkrs);
 Ax = zeros(ntkrs,6);
 Rxy = zeros(6,ny);
 Ay = zeros(ntkrs,ny);
-Ry = sqrtm((SigmaBlen*eye(ny))^-1);
+Py0 = SigmaBlen*eye(ny);
+Ry = sqrtm(Py0^-1);
 by = zeros(ny,1);
 r = zeros(ntkrs,1); 
 tic;
@@ -266,14 +267,23 @@ for ii = 2:nfilt
   by = 0*by;
   x_hat = x_bar + dx;
 
-  Rn = [ Rx Rxy ; zeros(3,6) Ry ];
-  Rninv = mth_triinv(Rn);
-  Rxinv = Rninv(1:6,1:6);
+    % Tapley, et. al.
+  %Rn = [ Rx Rxy ; zeros(3,6) Ry ];
+  %Rninv = mth_triinv(Rn);
+  %Rxinv = Rninv(1:6,1:6);
+  %S = -Rxinv*Rxy;
+  %Pn = Rninv*Rninv';
+  %Px = Pn(1:6,1:6);
+  %Py = Pn(7:9,7:9);
+  %P_hat = Px + S*Py*S';
+    % Bierman
+  Rxinv = mth_triinv(Rx);
   S = -Rxinv*Rxy;
-  Pn = Rninv*Rninv';
-  Px = Pn(1:6,1:6);
-  Py = Pn(7:9,7:9);
-  P_hat = Px + S*Py*S';
+  Phatc = Rxinv*Rxinv';
+  Ryinv = mth_triinv(Ry);
+  Py = Ryinv*Ryinv';
+  %Py = Py0;
+  P_hat = Phatc + S*Py*S';
 
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
