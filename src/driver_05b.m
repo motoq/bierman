@@ -282,7 +282,6 @@ for ii = 2:nfilt
   Phatc = Rxinv*Rxinv';
   Ryinv = mth_triinv(Ry);
   Py = Ryinv*Ryinv';
-  %Py = Py0;
   P_hat = Phatc + S*Py*S';
 
   x(:,ii) = x_hat;
