@@ -39,19 +39,14 @@ function [phat, SigmaP, R, z, itr] = box_locate_hh(tkr_pos, y, SqrtW, sigpos)
   Ap = zeros(nmeas, 3);
   for itr = 1:maxitr
       % Build residual and partials matrices
-    ApTWAy = zeros(3);
     for ii = 1:nmeas
       sc = phat - tkr_pos(:,ii);
       yc = norm(sc);
       r(ii) = y(ii) - yc;
       Ap(ii,:) = est_drng_dloc(tkr_pos(:,ii), phat);
-      if nargin == 4
-        Ay = est_drng_dpos(tkr_pos(:,ii), phat);
-        ApTWAy = ApTWAy + Ap(ii,:)'*W(ii,ii)*Ay;
-      end
     end
       % Reform W based on biased tracker location
-    if false %nargin == 4
+    if nargin == 4
       Aq = zeros(nmeas,3*nmeas);
         % not individually correlated
       SigmaQi = sigpos*sigpos*eye(3);
@@ -82,7 +77,4 @@ function [phat, SigmaP, R, z, itr] = box_locate_hh(tkr_pos, y, SqrtW, sigpos)
   end
   Rinv = mth_triinv(R);
   SigmaP = Rinv*Rinv';
-  if nargin == 4
-    SigmaP = SigmaP + SigmaP*ApTWAy*sigpos*sigpos*eye(3)*ApTWAy'*SigmaP;
-  end
 
