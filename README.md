@@ -31,6 +31,13 @@ Performs speed comparisons of the stabilized the Kalman, U-D, and SRIF
 methods.  Percent containment is also output.
 ```
 
+driver_02b_bias.m
+```
+Adds bias to the measurement model and then performs comparisons between
+the Schmidt Consider Kalman as a baseline and various implementations of
+the SRIF.
+```
+
 driver_householder.m - detour
 ```
 Compares  A WLS solution of the normal equations with one using
@@ -97,5 +104,12 @@ driver_05.m
 The stabilized Kalman, U-D, and hybrid SRIF are run with process noise
 and process noise compensation along with biased tracker locations
 that are not compensated for.
+```
+
+driver_05.m
+```
+The SRIF method with bias compensation and Schmidt Consider Kalman are
+implemented with (the U-D is still in progress - SRIF and SCK are still
+being refined).
 ```
 

@@ -1,13 +1,22 @@
 %
-% Copyright 2016 Kurt Motekew
+% Copyright 2017 Kurt Motekew
 %
 % This Source Code Form is subject to the terms of the Mozilla Public
 % License, v. 2.0. If a copy of the MPL was not distributed with this
 % file, You can obtain one at http://mozilla.org/MPL/2.0/.
 %
 
-% This driver script does speed comparisions with the Kalman, U-D, and SRIF
-% estimation methods.  Containment is also output
+% This driver adds bias to the measurement model by perturbing the sensor
+% locations.  It then performs accuracy, containment, and speed comparisons
+% of the Schmodt Consider Kalman(SCK), SRIF, SRIF with 'a posteriori'
+% covariance inflation, SRIF with bias inclusion during processing, and SRIF
+% full batch processing.  Speed and containment are compared.  Key comparisions
+% are the lack of containment with no bias (SRIF), speed and containment 
+% between SCK and SRIF B, and full batch SRIF vs. SRIF 'a posteriori' 
+% containment.  While the full batch method does not improve the estimate
+% for this scenario (it can often provide an order of magnitude improvement
+% in the miss distance over other methods) it does have the most reliable
+% estimate covariance.
 
 
 close all;
@@ -107,12 +116,12 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_schmidt);
+    Ax = est_drng_dloc(tkrs(:,itkr), phat_schmidt);
     Ay = est_drng_dpos(tkrs(:,itkr), phat_schmidt);
     yc = norm(phat_schmidt - tkrs(:,itkr));
     r = y2(ii) - yc;
     [phat_schmidt, SigmaP_schmidt, SigmaPY] = est_upd_schmidt(...
-                                        phat_schmidt, SigmaP_schmidt, Ap,...
+                                        phat_schmidt, SigmaP_schmidt, Ax,...
                                         SigmaY, Ay, SigmaPY, r, SigmaZ);
   end
   schmidt_time = schmidt_time + toc;
@@ -127,10 +136,10 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_srif);
+    Ax = est_drng_dloc(tkrs(:,itkr), phat_srif);
     yc = norm(phat_srif - tkrs(:,itkr));
     r = y2(ii) - yc;
-    [dp, R, z, ~] = est_upd_hhsrif(R, z, Ap, r, Wsqrt);
+    [dp, R, z, ~] = est_upd_hhsrif(R, z, Ax, r, Wsqrt);
     z = 0*z;
     phat_srif = phat_srif + dp;
   end
@@ -140,19 +149,19 @@ for jj = 1:ntest
   phat_srif_apost = phat_srif0;
   Rapost = R0;
   z = z0;
-  ApTWAy = zeros(3); % apost
+  AxTWAy = zeros(3); % apost
   tic;
   for ii = 1:nmeas2
     itkr = mod(ii,nmeas);
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_srif_apost);
+    Ax = est_drng_dloc(tkrs(:,itkr), phat_srif_apost);
     Ay = est_drng_dpos(tkrs(:,itkr), phat_srif_apost);
-    ApTWAy = ApTWAy + Ap'*W*Ay;
+    AxTWAy = AxTWAy + Ax'*W*Ay;
     yc = norm(phat_srif_apost - tkrs(:,itkr));
     r = y2(ii) - yc;
-    [dp, Rapost, z, ~] = est_upd_hhsrif(Rapost, z, Ap, r, Wsqrt);
+    [dp, Rapost, z, ~] = est_upd_hhsrif(Rapost, z, Ax, r, Wsqrt);
     z = 0*z;
     phat_srif_apost = phat_srif_apost + dp;
   end
@@ -171,11 +180,11 @@ for jj = 1:ntest
     if itkr == 0
       itkr = nmeas;
     end
-    Ap = est_drng_dloc(tkrs(:,itkr), phat_srifb);
+    Ax = est_drng_dloc(tkrs(:,itkr), phat_srifb);
     Ay = est_drng_dpos(tkrs(:,itkr), phat_srifb);
     yc = norm(phat_srifb - tkrs(:,itkr));
     r = y2(ii) - yc;
-    [dp, Rx, Rxy, z, Ry, zy] = est_upd_hhsrif_bias(Rx, Rxy, z, Ap, r, Wsqrt,...
+    [dp, Rx, Rxy, z, Ry, zy] = est_upd_hhsrif_bias(Rx, Rxy, z, Ax, r, Wsqrt,...
                                                                Ry, zy, Ay);
     z = 0*z;
     zy = 0*zy;
@@ -210,7 +219,7 @@ for jj = 1:ntest
   miss_srif_apost(jj) = norm(phat_srif_apost - rho);
   Rinv = mth_triinv(Rapost);
   SigmaX = Rinv*Rinv';
-  SigmaX = SigmaX + SigmaX*ApTWAy*SigmaY*ApTWAy'*SigmaX;
+  SigmaX = SigmaX + SigmaX*AxTWAy*SigmaY*AxTWAy'*SigmaX;
   if (SF95_3D > mth_mahalanobis(rho, phat_srif_apost, SigmaX))
     contained_3d_srif_apost = contained_3d_srif_apost + 1;
   end
