@@ -24,6 +24,7 @@ rho = [0.25 0.25 0]';
 blen = 1;
 sblen = .003*blen;                          % .3% of total distance for tracker
 SigmaBlen = sblen*sblen;
+SigmaY = SigmaBlen*eye(3);
 tkrs = [                                    % uncertainty
          0       0       blen ;
          blen    0       blen ;
@@ -35,19 +36,23 @@ nmeas2 = 20;                                % Sequential obs, static
 
   % Tracker accuracy
 srng = .001;
-SigmaRng = srng*srng;
+SigmaZ = srng*srng;
 Wsqrt = 1/srng;
+W = Wsqrt*Wsqrt';
 y(nmeas) = 0;
 y2(nmeas2) = 0;
 testnum = 1:ntest;
+miss_schmidt = zeros(1,ntest);
 miss_srif = zeros(1,ntest);
 miss_srif_apost = zeros(1,ntest);
 miss_srifb = zeros(1,ntest);
 miss_srif_batch = zeros(1,ntest);
+contained_3d_schmidt = 0;
 contained_3d_srif = 0;
 contained_3d_srif_apost = 0;
 contained_3d_srifb = 0;
 contained_3d_srif_batch = 0;
+schmidt_time = 0;
 srif_time = 0;
 srif_apost_time = 0;
 srifb_time = 0;
@@ -92,6 +97,26 @@ for jj = 1:ntest
   % Updates
   %
 
+    % Schmidt consider Kalman
+  phat_schmidt = phat_srif0;
+  SigmaP_schmidt = SigmaP_srif0;
+  SigmaPY = zeros(3,3);
+  tic;
+  for ii = 1:nmeas2
+    itkr = mod(ii,nmeas);
+    if itkr == 0
+      itkr = nmeas;
+    end
+    Ap = est_drng_dloc(tkrs(:,itkr), phat_schmidt);
+    Ay = est_drng_dpos(tkrs(:,itkr), phat_schmidt);
+    yc = norm(phat_schmidt - tkrs(:,itkr));
+    r = y2(ii) - yc;
+    [phat_schmidt, SigmaP_schmidt, SigmaPY] = est_upd_schmidt(...
+                                        phat_schmidt, SigmaP_schmidt, Ap,...
+                                        SigmaY, Ay, SigmaPY, r, SigmaZ);
+  end
+  schmidt_time = schmidt_time + toc;
+
     % SRIF with no bias incorporation
   phat_srif = phat_srif0;
   R = R0;
@@ -115,7 +140,6 @@ for jj = 1:ntest
   phat_srif_apost = phat_srif0;
   Rapost = R0;
   z = z0;
-  W = Wsqrt*Wsqrt';  % apost
   ApTWAy = zeros(3); % apost
   tic;
   for ii = 1:nmeas2
@@ -139,7 +163,7 @@ for jj = 1:ntest
   Rx = R0;
   Rxy = zeros(3,3);                 % 3 solve for, 3 pos bias per obs
   z = z0;
-  Ry = sqrtm((SigmaBlen*eye(3))^-1);
+  Ry = sqrtm(SigmaY^-1);
   zy = zeros(3,1);
   tic;
   for ii = 1:nmeas2
@@ -171,6 +195,11 @@ for jj = 1:ntest
   %
 
     % Get containment stats for each
+  miss_schmidt(jj) = norm(phat_schmidt - rho);
+  if (SF95_3D > mth_mahalanobis(rho, phat_schmidt, SigmaP_schmidt))
+    contained_3d_schmidt = contained_3d_schmidt + 1;
+  end
+    %
   miss_srif(jj) = norm(phat_srif - rho);
   Rinv = mth_triinv(R);
   SigmaX = Rinv*Rinv';
@@ -181,7 +210,7 @@ for jj = 1:ntest
   miss_srif_apost(jj) = norm(phat_srif_apost - rho);
   Rinv = mth_triinv(Rapost);
   SigmaX = Rinv*Rinv';
-  SigmaX = SigmaX + SigmaX*ApTWAy*SigmaBlen*eye(3)*ApTWAy'*SigmaX;
+  SigmaX = SigmaX + SigmaX*ApTWAy*SigmaY*ApTWAy'*SigmaX;
   if (SF95_3D > mth_mahalanobis(rho, phat_srif_apost, SigmaX))
     contained_3d_srif_apost = contained_3d_srif_apost + 1;
   end
@@ -193,7 +222,6 @@ for jj = 1:ntest
   Ryinv = mth_triinv(Ry);
   Py = Ryinv*Ryinv';
   SigmaX = Phatc + S*Py*S';
-
   if (SF95_3D > mth_mahalanobis(rho, phat_srifb, SigmaX))
     contained_3d_srifb = contained_3d_srifb + 1;
   end
@@ -202,18 +230,22 @@ for jj = 1:ntest
     contained_3d_srif_batch = contained_3d_srif_batch + 1;
   end
 end
+p95_3d_schmidt = 100*contained_3d_schmidt/ntest;
 p95_3d_srif = 100*contained_3d_srif/ntest;
 p95_3d_srif_apost = 100*contained_3d_srif_apost/ntest;
 p95_3d_srifb = 100*contained_3d_srifb/ntest;
 p95_3d_srif_batch = 100*contained_3d_srif_batch/ntest;
 
 figure; hold on;
-plot(testnum, miss_srif, 's', testnum, miss_srif_apost, '*',...
+plot(testnum, miss_schmidt, '+',...
+     testnum, miss_srif, 's', testnum, miss_srif_apost, '*',...
      testnum, miss_srifb, 'x', testnum, miss_srif_batch, 'o');
 xlabel('Trial');
 ylabel('RSS Miss Distance');
-legend('SRIF', 'SRIF Apost', 'SRIF B', 'Full Batch');
+legend('SKF', 'SRIF', 'SRIF Apost', 'SRIF B', 'Full Batch');
 
+fprintf('\nSKF containment: %1.1f', p95_3d_schmidt);
+fprintf(' in %1.4f seconds', schmidt_time);
 fprintf('\nSRIF containment: %1.1f', p95_3d_srif);
 fprintf(' in %1.4f seconds', srif_time);
 fprintf('\nSRIF a posteriori containment: %1.1f', p95_3d_srif_apost);
