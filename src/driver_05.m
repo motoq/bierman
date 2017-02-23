@@ -157,11 +157,11 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 kal_time = toc;
-res_plot('Linearized Extended Kalman with Q & C',...
+res_plot('Linearized Extended Kalman with Q & Y',...
          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended Kalman Trajectory with Q & C');
+title('Linearized Extended Kalman Trajectory with Q & Y');
 view([70 20]);
 
   %
@@ -201,11 +201,11 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 ud_time = toc;
-res_plot('Linearized Extended UD with Q & C',...
+res_plot('Linearized Extended UD with Q & Y',...
          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended UD Trajectory with Q & C');
+title('Linearized Extended UD Trajectory with Q & Y');
 view([70 20]);
 
   %
@@ -256,11 +256,11 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 srif_time = toc;
-res_plot('Linearized Extended SRIF with Q & C',...
+res_plot('Linearized Extended SRIF with Q & Y',...
          t(filt_rng), x_true(:,filt_rng), x, P);    
   % Plot geometry                               
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended SRIF Trajectory with Q & C');
+title('Linearized Extended SRIF Trajectory with Q & Y');
 view([70 20]);
 
 fprintf('\n Kalman Time:\t%1.4f seconds', kal_time);
