@@ -9,13 +9,18 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% Kalman, U-D, SRIF methods with process noise (prediction update)
-% and consider parameters (observation update error).  An error is added
+% Kalman, Schmidt consider Kalman, and SRIF with consider parameter
+% incorporation methods with process noise (prediction update)
+% and bias (observation update error).  An error is added
 % to the positions of each tracker.  Different random errors are added
 % to each component of each tracker.  This bias is held constant for each
-% trajectory.
+% trajectory.  The Kalman without incorporation of bias is shown as a
+% reference.  The driver_05.m script illustrates both the Kalman and
+% SRIF methods behaved the same with bias (but without bias incorporation).
+% This script will compare the Kalman and SRIF with consider parameter
+% processing.
 %
-% Kurt Motekew  2016/12/29
+% Kurt Motekew  2017/02/23
 %
 
 close all;
@@ -123,9 +128,49 @@ x_hat0 = x(:,1);                            % 'a priori' estimate and
 P_hat0 = P(:,:,1);                          % covariance
 
   %
+  % Linearized extended Kalman filter ignoring bias effects
+  %
+x_hat = x_hat0;
+P_hat = P_hat0;
+x = zeros(6,nfilt);                         % Reset stored estimates
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;                             % Set first estimate to
+P(:,:,1) = P_hat;                           % 'a priori' values
+Phi = traj_strans(dt);                      % Fixed state transition matrix
+tic;
+for ii = 2:nfilt
+    % First propagate state and covariance to new time - add
+    % process noise when propagating covariance
+  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
+  vel = traj_vel(dt, x_hat(4:6));
+  x_bar = [pos ; vel];
+  Q = (2*global_b)^2;
+  G = -[.5*vel*dt ; vel]*dt;
+  P_bar = Phi*P_hat*Phi' + G*Q*G';
+    % Obs update based on observed (z) vs. computed (zc) residual (r)
+  for jj = 1:ntkrs
+    Ax = zeros(1,6);
+    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
+    zc = norm(x_bar(1:3) - tkrs(:,jj));
+    r = z(jj,ii+filt_ndxoff) - zc;
+    [x_bar, P_bar] = est_upd_kalman(x_bar, P_bar, Ax, r, Wsqrt);
+  end
+  x_hat = x_bar;
+  P_hat = P_bar;
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+kal_time = toc;
+res_plot('Linearized Extended Kalman with Q & Y',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('Linearized Extended Kalman Trajectory with Q & Y');
+view([70 20]);
+
+  %
   % Linearized extended Schmidt Kalman filter
   %
-
 x_hat = x_hat0;
 P_hat = P_hat0;
 x = zeros(6,nfilt);                         % Reset stored estimates
@@ -164,7 +209,7 @@ for ii = 2:nfilt
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
-kal_time = toc;
+sck_time = toc;
 res_plot('Linearized Extended Schmidt Consider Kalman',...
          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
@@ -173,53 +218,8 @@ title('Linearized Extended Kalman Trajectory with Q & Y');
 view([70 20]);
 
   %
-  % U-D
-  %
-
-x_hat = x_hat0;
-P_hat = P_hat0;
-[U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
-x = zeros(6,nfilt);                         % Reset stored estimates
-P = zeros(6,6,nfilt);
-x(:,1) = x_hat;                             % Set first estimate to
-P(:,:,1) = P_hat;                           % 'a priori' values
-Phi = traj_strans(dt);                      % Fixed state transition matrix
-tic;
-for ii = 2:nfilt
-    % First propagate state and covariance to new time - add
-    % process noise when propagating covariance
-  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
-  vel = traj_vel(dt, x_hat(4:6));
-  x_bar = [pos ; vel];
-  %Q = (.5*global_b)^2;
-  Q = (2*global_b)^2;
-  G = -[.5*vel*dt ; vel]*dt;
-  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, Q, G);
-    % Obs update based on observed (z) vs. computed (zc) residual (r)
-  for jj = 1:ntkrs
-    Ax = zeros(1,6);
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
-    zc = norm(x_bar(1:3) - tkrs(:,jj));
-    r = z(jj,ii+filt_ndxoff) - zc;
-    [x_bar, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);
-  end
-  x_hat = x_bar;
-  P_hat = U*D*U';
-  x(:,ii) = x_hat;
-  P(:,:,ii) = P_hat;
-end
-ud_time = toc;
-res_plot('Linearized Extended UD with Q & Y',...
-         t(filt_rng), x_true(:,filt_rng), x, P);
-  % Plot geometry
-traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended UD Trajectory with Q & Y');
-view([70 20]);
-
-  %
   % SRIF
   %
-
 x_hat = x_hat0;
 P_hat = P_hat0;
 ATA = P_hat^-1;
@@ -266,8 +266,7 @@ for ii = 2:nfilt
   b = 0*b;
   by = 0*by;
   x_hat = x_bar + dx;
-
-    % Tapley, et. al.
+    % Tapley, et. al. covariance method
   %Rn = [ Rx Rxy ; zeros(3,6) Ry ];
   %Rninv = mth_triinv(Rn);
   %Rxinv = Rninv(1:6,1:6);
@@ -276,7 +275,7 @@ for ii = 2:nfilt
   %Px = Pn(1:6,1:6);
   %Py = Pn(7:9,7:9);
   %P_hat = Px + S*Py*S';
-    % Bierman
+    % Bierman covariance method
   Rxinv = mth_triinv(Rx);
   S = -Rxinv*Rxy;
   Phatc = Rxinv*Rxinv';
@@ -296,7 +295,7 @@ title('Linearized Extended SRIF Trajectory with Q & Y');
 view([70 20]);
 
 fprintf('\n Kalman Time:\t%1.4f seconds', kal_time);
-fprintf('\n U-D Time:\t%1.4f seconds', ud_time);
+fprintf('\n Schmidt Time:\t%1.4f seconds', sck_time);
 fprintf('\n SRIF Time:\t%1.4f seconds', srif_time);
 fprintf('\n');
 

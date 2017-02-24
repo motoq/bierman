@@ -16,7 +16,7 @@
 %
 
 
-clear all;
+clear;
 close all;
 
   % Data

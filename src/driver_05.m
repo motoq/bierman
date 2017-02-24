@@ -10,10 +10,11 @@
 % Simple wiffle ball in a room trajectory
 %
 % Kalman, U-D, SRIF methods with process noise (prediction update)
-% and consider parameters (observation update error).  An error is added
-% to the positions of each tracker.  Different random errors are added
+% and consider bias (observation update error).  An error is added to
+% the positions of each tracker.  Different random errors are added
 % to each component of each tracker.  This bias is held constant for each
-% trajectory.
+% trajectory.  However, the filters do not incorporate any knowledge of
+% bias information into the processing.
 %
 % Kurt Motekew  2016/12/29
 %
@@ -121,10 +122,8 @@ x_hat0 = x(:,1);                            % 'a priori' estimate and
 P_hat0 = P(:,:,1);                          % covariance
 
   %
-  % Linearized extended filter via Kalman stabilized method with covariance
-  % inflation.
+  % Linearized extended filter via Kalman stabilized method
   %
-
 x_hat = x_hat0;
 P_hat = P_hat0;
 x = zeros(6,nfilt);                         % Reset stored estimates
@@ -139,7 +138,6 @@ for ii = 2:nfilt
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];
-  %Q = (.5*global_b)^2;
   Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
   P_bar = Phi*P_hat*Phi' + G*Q*G';
@@ -167,7 +165,6 @@ view([70 20]);
   %
   % U-D
   %
-
 x_hat = x_hat0;
 P_hat = P_hat0;
 [U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
@@ -183,7 +180,6 @@ for ii = 2:nfilt
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];
-  %Q = (.5*global_b)^2;
   Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
   [~, U, D] = est_pred_ud(x_hat, U, D, Phi, Q, G);
@@ -211,7 +207,6 @@ view([70 20]);
   %
   % SRIF
   %
-
 x_hat = x_hat0;
 P_hat = P_hat0;
 ATA = P_hat^-1;

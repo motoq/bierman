@@ -109,7 +109,6 @@ that are not compensated for.
 driver_05.m
 ```
 The SRIF method with bias compensation and Schmidt Consider Kalman are
-implemented with (the U-D is still in progress - SRIF and SCK are still
-being refined).
+implemented and compared to the standard Kalman filter.
 ```
 
