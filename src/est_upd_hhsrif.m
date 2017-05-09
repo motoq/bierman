@@ -40,6 +40,6 @@ function [xhat, Rhat, zhat, e] = est_upd_hhsrif(R0, z0, A, z, SqrtW)
   m = size(z,1);
   Rhat = R_z_hat(1:n,1:n);
   zhat = R_z_hat(1:n,(n+1));
-  e = sum(R_z_hat((n+1),(n+1):m));
+  e = sum(R_z_hat((n+1):(n+m),n+1));
   
   xhat = mth_trisol(Rhat, zhat);
