@@ -67,6 +67,14 @@ have been added.  The goal is to implement a simple filter (observation model
 and dynamic model) that outperforms the WLS method (observation model only).
 ```
 
+driver_03b.m
+```
+Estimation of a dynamic state - simple wiffle ball in a room trajectory
+
+Illustrates the use of a reference trajectory to produce estimate
+covariance as a function of time using the U-D filter.
+```
+
 driver_04.m
 ```
 Adds drag to the truth model for driver_03 while leaving it out of the
@@ -80,6 +88,13 @@ The same scenario as driver_04.m where the truth model includes drag and
 the filter model doesn't.  Here, the U-D and SRIF methods are compared
 where both incorporate process noise to account for the unmodeled drag
 effect.
+```
+
+driver_04b2.m
+```
+Illustrates the use of a reference trajectory to produce estimate
+covariance as a function of time using the SRIF when process noise
+is present in the filter model.
 ```
 
 driver_04c.m

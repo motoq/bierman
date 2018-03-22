@@ -9,14 +9,14 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% This driver script first estimates a simple drag free trajectory based
-% on simulated range observations (using range trackers from previous
-% examples) that are subject to only noise.  The state estimates and
-% covariance are then plotted.  Next, the true trajectory used as a
-% reference trajectory while only the covariance is computed based on
-% the error budget.
+% This driver first estimats the trajectory using the batch method of
+% the SRIF where all measurements taken at an instant in time are processed
+% at once given range observations subject to noise while the filter's
+% model is subject to process noise because it ignores drag (see driver_04b).
+% Next, the true trajectory used as a reference trajectory while only the
+% covariance is computed based on the error budget.
 %
-% Kurt Motekew  2018/03/21  Based on driver_03.m
+% Kurt Motekew  2018/03/21
 %
 
 close all;
@@ -25,11 +25,9 @@ clear;
 %
 % Global Variable
 %
-% Set drag coefficient to zero for this initial filtering example
-%
 
 global global_b;
-global_b = 0;
+global_b = 0.05;
 
   %
   % SETUP
@@ -54,16 +52,25 @@ ntkrs = size(tkrs,2);
   % Tracker accuracy
 srng = .001;                                % Obs standard deviation
 vrng = srng*srng;                           % Obs variance
-W = vrng^-1;                                % Obs weighting "matrix"
+Wsqrt = 1/srng;
+W = Wsqrt*Wsqrt';                           % Obs weighting "matrix"
 
 t0 = 0;                                     % Scenario start time
 tf = 3;                                     % Scenario stop time
 dt = .01;                                   % Data rate
 
+  % Create an ideal trajectory.  This is the model used by the filter
+  % without the influence of observations.
+[~, x_ideal] = traj_ideal(t0, dt, tf, x0);
   % 'True' trajectory for which to generate simulated observations
 [t, x_true] = traj_integ(t0, dt, tf, x0);
   % number of measurement sets - total obs = nsets*ntkrs
 nsets = size(t,2);
+
+  % Plot geometry
+traj_plot(x_ideal, x_true, tkrs, blen);
+title('Boxed Tracker Geometry');
+view([70 20]);
 
 %
 % Create simulated range measurements
@@ -105,65 +112,94 @@ filt_ndxoff = ninit - 1;
 filt_rng = ninit:(filt_ndxoff + nfilt);
 
   %
-  % Linearized extended filter (via U-D method)
-  % Nonlinear yet simple analytic trajectory for state propagation.
-  % State vector of position and velocity - no acceleration terms in
-  % the state transition matrix
+  % 'a priori' estimate and covariance to prime filters
   %
 
-x_hat = x(:,1);                             % 'a priori' estimate and
-P_hat = P(:,:,1);                           % covariance
-[U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
+x_hat0 = x(:,1);                            % 'a priori' estimate and
+P_hat0 = P(:,:,1);                          % covariance
+
+  %
+  % Householder Measurement Set Batch SRIF
+  %
+
+x_hat = x_hat0;
+P_hat = P_hat0;
+ATA = P_hat^-1;
+R = mth_sqrtm(ATA);
+b = R*x_hat;                                % Lazy, properly size b of zeros
+b = 0*b;                                    % Differentials, not absolutes
 x = zeros(6,nfilt);                         % Reset stored estimates
 P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
-Ax = zeros(1,6);
+PhiInv = Phi^-1;                            % Inverse for SRIF propagation
+  % Fixed process noise
+Q = diag((2*global_b)^2);
+RwInv = sqrtm(Q);
+Rw = RwInv^-1;
+WsqrtSet = Wsqrt*eye(ntkrs);
+Ax = zeros(ntkrs,6);
+r = zeros(ntkrs,1);
 for ii = 2:nfilt
-    % First propagate state and covariance to new time - no process noise
+    % First propagate state and information array to new time - add
+    % process noise when propagating information array
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];
-  [~, U, D] = est_pred_ud(x_hat, U, D, Phi, zeros(1,6), eye(6));
+  G = -[.5*vel*dt ; vel]*dt;
+  [R, b] = est_pred_hhsrif(R, b, PhiInv, Rw, G);
+  b = 0*b;
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
+    Ax(jj,1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
     zc = norm(x_bar(1:3) - tkrs(:,jj));
-    r = z(jj,ii+filt_ndxoff) - zc;
-    [x_bar, U, D] = est_upd_ud(x_bar, U, D, Ax, r, vrng);
+    r(jj) = z(jj,ii+filt_ndxoff) - zc;
   end
-  x_hat = x_bar;
-  P_hat = U*D*U';
+  [dx, R, b, ~] = est_upd_hhsrif(R, b, Ax, r, WsqrtSet);
+  b = 0*b;
+  x_hat = x_bar + dx;
+  Rinv = mth_triinv(R);
+  P_hat = Rinv*Rinv';
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
-res_plot('Linearized Extended UD', t(filt_rng), x_true(:,filt_rng), x, P);
+res_plot('Linearized Extended Batch SRIF with Q',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended UD Trajectory');
+title('Linearized Extended Batch SRIF Trajectory with Q');
 view([70 20]);
 
-  %
-  % Generate position and velocity covariance using the U-D method
-  % and the true trajectory as a reference.
-  %
-
-P_hat = P(:,:,1);                           % covariance
-[U, D] = mth_udut2(P_hat);                  % Decompose covariance for U-D form
+P_hat = P_hat0;
+ATA = P_hat^-1;
+R = mth_sqrtm(ATA);
+b = zeros(size(x_true(:,1), 1), 1);         % Differentials, not absolutes
 P = zeros(6,6,nsets);
-P(:,:,1) = P_hat;                           % 'a priori' values
+P(:,:,1) = P_hat;
 Phi = traj_strans(dt);                      % Fixed state transition matrix
-Ax = zeros(1,6);
+PhiInv = Phi^-1;                            % Inverse for SRIF propagation
+  % Fixed process noise
+Q = diag((2*global_b)^2);
+RwInv = sqrtm(Q);
+Rw = RwInv^-1;
+WsqrtSet = Wsqrt*eye(ntkrs);
+Ax = zeros(ntkrs,6);
+r = zeros(ntkrs,1);
 for ii = 2:nsets
     % Instead of propagating the state, pull the current reference trajectory
-  [~, U, D] = est_pred_ud(x_true(:,ii), U, D, Phi, zeros(1,6), eye(6));
+  vel = x_true(4:6,ii);
+  G = -[.5*vel*dt ; vel]*dt;
+  [R, b] = est_pred_hhsrif(R, b, PhiInv, Rw, G);
+  b = 0*b;
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_true(1:3,ii));
-    [~, U, D] = est_upd_ud(x_true(:,ii), U, D, Ax, 0., vrng);
+    Ax(jj,1:3) = est_drng_dloc(tkrs(:,jj), x_true(1:3,ii));
   end
-  P_hat = U*D*U';
+  [~, R, b, ~] = est_upd_hhsrif(R, b, Ax, r, WsqrtSet);
+  b = 0*b;
+  Rinv = mth_triinv(R);
+  P_hat = Rinv*Rinv';
   P(:,:,ii) = P_hat;
 end
-cov_plot('UD', t, P);
+cov_plot('Linearized Extended Batch SRIF with Q', t, P);
