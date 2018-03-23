@@ -127,3 +127,11 @@ The SRIF method with bias compensation and Schmidt Consider Kalman are
 implemented and compared to the standard Kalman filter.
 ```
 
+driver_05c.m
+```
+Illustrates the use of a reference trajectory to produce estimate
+covariance as a function of time using the SRIF when process noise
+is present in the filter model and systemic error is present in the
+observation model.
+```
+
