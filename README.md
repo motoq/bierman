@@ -129,8 +129,16 @@ implemented and compared to the standard Kalman filter.
 driver_05c.m
 ```
 Illustrates the use of a reference trajectory to produce estimate
-covariance as a function of time using the Schmidt Kalman and SRIF
+covariance as a function of time using the Schmidt Kalman filter
 when process noise is present in the filter model and systemic error
 is present in the observation model.
+```
+
+driver_05d.m
+```
+Illustrates the use of a reference trajectory to produce estimate
+covariance as a function of time using the SRIF when process noise
+is present in the filter model and systemic error is present in the
+observation model.
 ```
 

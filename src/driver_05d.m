@@ -9,11 +9,10 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% Schmidt Kalman with process noise (prediction update) and bias
-% (observation update error).  An error is added to the positions
-% of each tracker.  Different random errors are added to each
-% component of each tracker.  This bias is held constant for each
-% trajectory.
+% SRIF with process noise (prediction update) and bias (observation
+% update error).  An error is added to the positions of each tracker.
+% Different random errors are added to each component of each tracker.
+% This bias is held constant for each trajectory.
 %
 % The true trajectory is used as a reference trajectory while only the
 % covariance is computed based on the error budget.
@@ -126,89 +125,119 @@ x_hat0 = x(:,1);                            % 'a priori' estimate and
 P_hat0 = P(:,:,1);                          % covariance
 
   %
-  % Linearized extended Schmidt Kalman filter
+  % SRIF
   %
 x_hat = x_hat0;
 P_hat = P_hat0;
+ATA = P_hat^-1;
+Rx = mth_sqrtm(ATA);
+b = Rx*x_hat;                               % Lazy, properly size b of zeros
+b = 0*b;                                    % Differentials, not absolutes
 x = zeros(6,nfilt);                         % Reset stored estimates
 P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
-SigmaZ = vrng;
-SigmaY = SigmaBlen*ones(ny);
-SigmaXY = zeros(6,ny);
-Ax = zeros(1,6);
+PhiInv = Phi^-1;                            % Inverse for SRIF propagation
+  % Fixed process noise
+Q = diag((2*global_b)^2);
+RwInv = sqrtm(Q);
+Rw = RwInv^-1;
+WsqrtSet = Wsqrt*eye(ntkrs);
+Ax = zeros(ntkrs,6);
+Rxy = zeros(6,ny);
+Ay = zeros(ntkrs,ny);
+Py0 = SigmaBlen*eye(ny);
+Ry = sqrtm(Py0^-1);
+by = zeros(ny,1);
+r = zeros(ntkrs,1); 
 tic;
 for ii = 2:nfilt
-    % First propagate state and covariance to new time - add
-    % process noise when propagating covariance
-  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
+    % First propagate state and information array to new time - add
+    % process noise when propagating information array
+  pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));         
   vel = traj_vel(dt, x_hat(4:6));
-  x_bar = [pos ; vel];
-  %Q = (.5*global_b)^2;
-  Q = (2*global_b)^2;
+  x_bar = [pos ; vel];           
   G = -[.5*vel*dt ; vel]*dt;
-  SigmaX = Phi*P_hat*Phi' + G*Q*G';
+  [Rx, ~] = est_pred_hhsrif(Rx, b, PhiInv, Rw, G);
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
-    Ay = est_drng_dpos(tkrs(:,jj), x_bar(1:3));
+    Ax(jj,1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
+    Ay(jj,1:3) = est_drng_dpos(tkrs(:,jj), x_bar(1:3));
     zc = norm(x_bar(1:3) - tkrs(:,jj));
-    r = z(jj,ii+filt_ndxoff) - zc;
-    [x_bar, SigmaX, SigmaXY] = est_upd_schmidt(x_bar, SigmaX, Ax,...
-                                                      SigmaY, Ay,...
-                                                      SigmaXY, r, SigmaZ);
+    r(jj) = z(jj,ii+filt_ndxoff) - zc;
   end
-  x_hat = x_bar;
-  P_hat = SigmaX;
-  SigmaXY = 0.7*SigmaXY;
+  [dx, Rx, Rxy, ~, Ry, ~] = est_upd_hhsrif_bias(Rx, Rxy, b, Ax, r, WsqrtSet,...
+                                                                    Ry, by, Ay);
+  x_hat = x_bar + dx;
+    % Bierman covariance method
+  Rxinv = mth_triinv(Rx);
+  S = -Rxinv*Rxy;
+  Phatc = Rxinv*Rxinv';
+  Ryinv = mth_triinv(Ry);
+  Py = Ryinv*Ryinv';
+  P_hat = Phatc + S*Py*S';
+
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
-sk_time = toc;
-res_plot('Linearized Extended Schmidt Consider Kalman',...
-         t(filt_rng), x_true(:,filt_rng), x, P);
-  % Plot geometry
+srif_time = toc;
+res_plot('Linearized Extended SRIF with Q & Y',...
+         t(filt_rng), x_true(:,filt_rng), x, P);    
+  % Plot geometry                               
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended Kalman Trajectory with Q & Y');
+title('Linearized Extended SRIF Trajectory with Q & Y');
 view([70 20]);
 
   %
-  % Schmidt Kalman covariance
+  % SRIF Covariance
   %
 P_hat = P_hat0;
+ATA = P_hat^-1;
+Rx = mth_sqrtm(ATA);
+b = zeros(size(x_true(:,1), 1), 1);         % Differentials, not absolutes
 P = zeros(6,6,nsets);
 P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
-SigmaZ = vrng;
-SigmaY = SigmaBlen*ones(ny);
-SigmaXY = zeros(6,ny);
-r = 0; 
+PhiInv = Phi^-1;                            % Inverse for SRIF propagation
+  % Fixed process noise
+Q = diag((2*global_b)^2);
+RwInv = sqrtm(Q);
+Rw = RwInv^-1;
+WsqrtSet = Wsqrt*eye(ntkrs);
+Ax = zeros(ntkrs,6);
+Rxy = zeros(6,ny);
+Ay = zeros(ntkrs,ny);
+Py0 = SigmaBlen*eye(ny);
+Ry = sqrtm(Py0^-1);
+by = zeros(ny,1);
+r = zeros(ntkrs,1); 
 tic;
 for ii = 2:nsets
     % Instead of propagating the state, pull the current reference trajectory
   vel = x_true(4:6,ii);
-  Q = (2*global_b)^2;
   G = -[.5*vel*dt ; vel]*dt;
-  SigmaX = Phi*P_hat*Phi' + G*Q*G';
+  [Rx, ~] = est_pred_hhsrif(Rx, b, PhiInv, Rw, G);
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
-    Ax = zeros(1,6);
-    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_true(1:3,ii));
-    Ay = est_drng_dpos(tkrs(:,jj), x_true(1:3,ii));
-    [~, SigmaX, SigmaXY] = est_upd_schmidt(x_true(:,ii), SigmaX, Ax,...
-                                                         SigmaY, Ay,...
-                                                         SigmaXY, r, SigmaZ);
+    Ax(jj,1:3) = est_drng_dloc(tkrs(:,jj), x_true(1:3,ii));
+    Ay(jj,1:3) = est_drng_dpos(tkrs(:,jj), x_true(1:3,ii));
   end
-  P_hat = SigmaX;
-  SigmaXY = 0.7*SigmaXY;
+  [~, Rx, Rxy, ~, Ry, ~] = est_upd_hhsrif_bias(Rx, Rxy, b, Ax, r, WsqrtSet,...
+                                                                    Ry, by, Ay);
+    % Bierman covariance method
+  Rxinv = mth_triinv(Rx);
+  S = -Rxinv*Rxy;
+  Phatc = Rxinv*Rxinv';
+  Ryinv = mth_triinv(Ry);
+  Py = Ryinv*Ryinv';
+  P_hat = Phatc + S*Py*S';
+
   P(:,:,ii) = P_hat;
 end
-skc_time = toc;
-cov_plot('Linearized Extended Schmidt Consider Kalman', t, P);
+srifcov_time = toc;
+cov_plot('Linearized Extended SRIF with Q & Y', t, P);    
 
-fprintf('\n Schmidt Trajectory Time:\t%1.4f seconds', sk_time);
-fprintf('\n Schmidt Covriance Time:\t%1.4f seconds', skc_time);
+fprintf('\n SRIF Trajectory Time:\t%1.4f seconds', srif_time);
+fprintf('\n SRIF Covriance Time:\t%1.4f seconds', srifcov_time);
 fprintf('\n');
-
