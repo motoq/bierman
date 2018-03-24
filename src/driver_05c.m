@@ -138,6 +138,7 @@ Phi = traj_strans(dt);                      % Fixed state transition matrix
 SigmaZ = vrng;
 SigmaY = SigmaBlen*ones(ny);
 SigmaXY = zeros(6,ny);
+Ax = zeros(1,6);
 tic;
 for ii = 2:nfilt
     % First propagate state and covariance to new time - add
@@ -151,7 +152,6 @@ for ii = 2:nfilt
   SigmaX = Phi*P_hat*Phi' + G*Q*G';
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
-    Ax = zeros(1,6);
     Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_bar(1:3));
     Ay = est_drng_dpos(tkrs(:,jj), x_bar(1:3));
     zc = norm(x_bar(1:3) - tkrs(:,jj));
