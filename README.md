@@ -34,8 +34,7 @@ methods.  Percent containment is also output.
 driver_02b_bias.m
 ```
 Adds bias to the measurement model and then performs comparisons between
-the Schmidt Consider Kalman as a baseline and various implementations of
-the SRIF.
+the Schmidt Kalman as a baseline and various implementations of the SRIF.
 ```
 
 driver_householder.m - detour
@@ -123,15 +122,15 @@ that are not compensated for.
 
 driver_05b.m
 ```
-The SRIF method with bias compensation and Schmidt Consider Kalman are
+The SRIF method with bias compensation and Schmidt Kalman are
 implemented and compared to the standard Kalman filter.
 ```
 
 driver_05c.m
 ```
 Illustrates the use of a reference trajectory to produce estimate
-covariance as a function of time using the SRIF when process noise
-is present in the filter model and systemic error is present in the
-observation model.
+covariance as a function of time using the Schmidt Kalman and SRIF
+when process noise is present in the filter model and systemic error
+is present in the observation model.
 ```
 

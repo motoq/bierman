@@ -244,7 +244,41 @@ fprintf('\n SRIF Time:\t%1.4f seconds', srif_time);
 
 
   %
-  % SRIF
+  % Schmidt Kalman covariance
+  %
+P_hat = P_hat0;
+P = zeros(6,6,nsets);
+P(:,:,1) = P_hat;                           % 'a priori' values
+Phi = traj_strans(dt);                      % Fixed state transition matrix
+SigmaZ = vrng;
+SigmaY = SigmaBlen*ones(ny);
+SigmaXY = zeros(6,ny);
+r = 0; 
+tic;
+for ii = 2:nsets
+    % Instead of propagating the state, pull the current reference trajectory
+  vel = x_true(4:6,ii);
+  Q = (2*global_b)^2;
+  G = -[.5*vel*dt ; vel]*dt;
+  SigmaX = Phi*P_hat*Phi' + G*Q*G';
+    % Obs update based on observed (z) vs. computed (zc) residual (r)
+  for jj = 1:ntkrs
+    Ax = zeros(1,6);
+    Ax(1:3) = est_drng_dloc(tkrs(:,jj), x_true(1:3,ii));
+    Ay = est_drng_dpos(tkrs(:,jj), x_true(1:3,ii));
+    [~, SigmaX, SigmaXY] = est_upd_schmidt(x_true(:,ii), SigmaX, Ax,...
+                                                         SigmaY, Ay,...
+                                                         SigmaXY, r, SigmaZ);
+  end
+  P_hat = SigmaX;
+  SigmaXY = 0.7*SigmaXY;
+  P(:,:,ii) = P_hat;
+end
+sck_time = toc;
+cov_plot('Linearized Extended Schmidt Consider Kalman', t, P);
+
+  %
+  % SRIF Covariance
   %
 P_hat = P_hat0;
 ATA = P_hat^-1;
@@ -291,6 +325,8 @@ for ii = 2:nsets
 end
 srif_time = toc;
 cov_plot('Linearized Extended SRIF with Q & Y', t, P);    
-fprintf('\n SRIF Time:\t%1.4f seconds', srif_time);
+
+fprintf('\n Schmidt Cov Time:\t%1.4f seconds', sck_time);
+fprintf('\n SRIF Cov Time:\t%1.4f seconds', srif_time);
 fprintf('\n');
 
