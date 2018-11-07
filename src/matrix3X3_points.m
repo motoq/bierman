@@ -1,4 +1,5 @@
 function [XX, YY, ZZ] = matrix3X3_points(A,N)
+%
 % Creates x, y, and z points suitable for surf and mesh plots given a
 % 3x3 covariance matrix.  This is based on a program from Nima Moshtagh
 % with some corrections.
@@ -12,11 +13,12 @@ function [XX, YY, ZZ] = matrix3X3_points(A,N)
 %   YY           Y-axis points
 %   ZZ           Z-axis points
 %
-%  Kurt Motekew MODS
+%  Nima Moshtagh Original code, 2009, see below
+%  Kurt Motekew  MODS
 %    20140312  - Split from matrix_plot - only generates points - no plotting
 %              - Correction such that axes are the square root of the
 %                eigenvalues, not the eigenvalues.
-%              - Updated documentation
+%              - Changed doc a little and actually made it useful
 %
 %------------------------------------------------------------------------------
 % Copyright (c) 2009, Nima Moshtagh

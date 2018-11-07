@@ -162,10 +162,11 @@ SigmaP3D = k2_3d*SigmaP;
 
 figure; hold on;
 for jj=1:ntest
-  scatter3(locs0(1,jj), locs0(2,jj), locs0(3,jj), 'r');
+  scatter3(locs0(1,jj), locs0(2,jj), locs0(3,jj), 'r', 'filled');
 end
 [XX, YY, ZZ] = matrix3X3_points(SigmaP3D, 20);
 mesh(XX + rho(1,1), YY + rho(2,1), ZZ + rho(3,1));
+colormap([.1 .2 .3]);
 hidden('off');
 xlabel('X');
 ylabel('Y');
