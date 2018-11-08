@@ -65,8 +65,8 @@ XX = zeros(N+1,N+1);
 YY = zeros(N+1,N+1);
 ZZ = zeros(N+1,N+1);
  
-for k = 1:length(X),
-  for j = 1:length(X),
+for k = 1:length(X)
+  for j = 1:length(X)
     point = [X(k,j) Y(k,j) Z(k,j)]';
     P = V * point;
     XX(k,j) = P(1);

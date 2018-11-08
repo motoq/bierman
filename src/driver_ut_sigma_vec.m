@@ -18,20 +18,10 @@ close all;
 phat0 = [ 0 0 0]';
 SigmaP0 = [ 3 2 1 ; 2 4 3 ; 1 3 5 ];
 
-L = size(phat0,1);                     % Dimension of state vector
-Chi = zeros(L, 2*L +1);                % Sigma vectors
-Chi(:,1) = phat0;
-
-alpha = .69;                           % Small positive value, 1 <= a <= 1e-4
+alpha = .69;                           % Small positive value, 1e-4 <= a <= 1
 kappa = 0; %3 - L;                     % Secondary scaling parameter
-lambda = alpha*alpha*(L + kappa) - L;
 
-  % Scale estimate covariance and form sigma vectors
-SigmaP0scaled = sqrtm((L + lambda)*SigmaP0);
-for ii = 2:(L+1)
-  Chi(:,ii) = phat0 + SigmaP0scaled(:,ii-1);
-  Chi(:,ii+L) = phat0 - SigmaP0scaled(:,ii-1);
-end
+Chi = est_ut_sigma_vec(phat0, SigmaP0, alpha, kappa);
 
   % Plot covariance and sigma vectors
 figure; hold on;
