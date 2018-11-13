@@ -13,11 +13,9 @@
 % A simple drag free trajectory is created along with simulated range
 % observations (using range trackers from previous examples) that are
 % subject to only measurement noise.  No process noise or bias effects
-% have been added.
+% exist.
 %
-% In progress... still adding UKF
-%
-% Kurt Motekew  2018/11/07
+% Kurt Motekew  2018/11/12
 %
 
 close all;
@@ -151,7 +149,7 @@ x = zeros(6,nfilt);                         % Reset stored estimates
 P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
-alpha = .069;
+alpha = .69;
 kappa = 0;
 beta = 2;
 dim = size(x_hat,1);
@@ -213,17 +211,6 @@ for ii = 2:nfilt
   x_hat = x_bar + K*(z(:,ii+filt_ndxoff) - y_bar);
   P_hat = P_bar - K*SigmaY_bar*K';
 
-    % Obs update based on observed (z) vs. computed (zc) residual (r)
-        % Computed observation and residual
-%      zc = norm(x_bar(1:3) - tkrs(:,jj));
-%      r = z(jj,ii+filt_ndxoff) - zc;
-
-%    [x_bar, P_bar] = est_upd_ukf(x_bar, P_bar, r, Wsqrt);
-%  end
-
-
-%  x_hat = x_bar;
-%  P_hat = P_bar;
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
