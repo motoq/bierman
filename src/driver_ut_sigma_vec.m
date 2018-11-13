@@ -12,7 +12,7 @@
 %
 
 clear;
-close all;
+%close all;
 
   % Estimate (origin of reference frame) and covariance
 phat0 = [ 0 0 0]';

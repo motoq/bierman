@@ -106,7 +106,7 @@ filt_ndxoff = ninit - 1;
 filt_rng = ninit:(filt_ndxoff + nfilt);
 
   %
-  % Linearized extended filter via Kalman stabilized method
+  % Extended Kalman filter
   %
 
 x_hat = x(:,1);                             % 'a priori' estimate and
@@ -139,4 +139,98 @@ res_plot('EKF', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('EKF Trajectory');
+view([70 20]);
+
+  %
+  % Unscented Kalman filter
+  %
+
+x_hat = x(:,1);                             % 'a priori' estimate and
+P_hat = P(:,:,1);                           % covariance
+x = zeros(6,nfilt);                         % Reset stored estimates
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;                             % Set first estimate to
+P(:,:,1) = P_hat;                           % 'a priori' values
+alpha = .069;
+kappa = 0;
+beta = 2;
+dim = size(x_hat,1);
+lambda = alpha*alpha*(dim + kappa) - dim;
+  % Weights for time and obs updates based on sigma vectors
+w_0_m = lambda/(dim + lambda);
+w_0_c = w_0_m - alpha*alpha + 1 + beta;
+w_i_m = 1/(2*(dim + lambda));
+w_i_c = w_i_m;
+w_0_m + 2*dim*w_i_m
+ w_0_c + 2*dim*w_i_c
+for ii = 2:nfilt
+    % Sigma vectors
+  Chi = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa);
+  n_sigma_vec = size(Chi, 2);
+    % Propagate sigma vectors
+  for kk = 1:n_sigma_vec
+    pos = traj_pos(dt, Chi(1:3,kk), Chi(4:6,kk));
+    vel = traj_vel(dt, Chi(4:6,kk));
+    Chi(1:3,kk) = pos;
+    Chi(4:6,kk) = vel;
+  end
+    % Propagated estimate and covariance
+  x_bar = w_0_m*Chi(:,1);
+  for kk = 2:(n_sigma_vec) 
+    x_bar = x_bar + w_i_m*Chi(:,kk);
+  end
+  chi_minus_xbar = Chi(:,1) - x_bar;
+  P_bar = w_0_c*chi_minus_xbar*chi_minus_xbar';
+  for kk = 2:(n_sigma_vec) 
+    chi_minus_xbar = Chi(:,kk) - x_bar;
+    P_bar = P_bar + w_i_c*chi_minus_xbar*chi_minus_xbar';            % Plus R
+  end
+    % Computed sigma vector based obs
+  Y = zeros(ntkrs,n_sigma_vec);
+  for jj = 1:ntkrs
+    for kk = 1:n_sigma_vec
+      Y(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
+    end
+  end
+  y_bar = w_0_m*Y(:,1);
+  for kk = 2:(n_sigma_vec)
+    y_bar = y_bar + w_i_m*Y(:,kk);
+  end
+    % Observation update
+  y_minus_ybar = Y(:,1) - y_bar;
+  chi_minus_xbar = Chi(:,1) - x_bar;
+  SigmaY_bar = w_0_c*y_minus_ybar*y_minus_ybar';
+  SigmaXY = w_0_c*chi_minus_xbar*y_minus_ybar';
+  for kk = 2:(n_sigma_vec)
+    y_minus_ybar = Y(:,kk) - y_bar;
+    chi_minus_xbar = Chi(:,kk) - x_bar;
+    SigmaY_bar = SigmaY_bar + w_i_c*y_minus_ybar*y_minus_ybar';
+    SigmaXY = SigmaXY + w_i_c*chi_minus_xbar*y_minus_ybar';
+  end
+  Rn = srng*srng*eye(ntkrs);
+  SigmaY_bar = SigmaY_bar + Rn;
+  K = SigmaXY*SigmaY_bar^-1;
+  x_hat = x_bar + K*(z(:,ii+filt_ndxoff) - y_bar);
+  P_hat = P_bar - K*SigmaY_bar*K';
+
+    % Obs update based on observed (z) vs. computed (zc) residual (r)
+        % Computed observation and residual
+%      zc = norm(x_bar(1:3) - tkrs(:,jj));
+%      r = z(jj,ii+filt_ndxoff) - zc;
+
+%    [x_bar, P_bar] = est_upd_ukf(x_bar, P_bar, r, Wsqrt);
+%  end
+
+
+%  x_hat = x_bar;
+%  P_hat = P_bar;
+  x(:,ii) = x_hat;
+  P(:,:,ii) = P_hat;
+end
+
+
+res_plot('UKF', t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('UKF Trajectory');
 view([70 20]);
