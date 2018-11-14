@@ -1,4 +1,5 @@
-function Chi = est_ut_sigma_vec(phat, SigmaPhat, alpha, kappa)
+function [Chi, w_0_m, w_i_m, w_0_c, w_i_c] =...
+                  est_ut_sigma_vec(phat, SigmaPhat, alpha, kappa, beta)
 % EST_UT_SIGMA_VEC computes the unscented transform of an estimate
 % given its covariance and "tuning" parameters.
 %
@@ -32,4 +33,10 @@ function Chi = est_ut_sigma_vec(phat, SigmaPhat, alpha, kappa)
     Chi(:,ii) = phat + SigmaPscaled(:,ii-1);
     Chi(:,ii+n) = phat - SigmaPscaled(:,ii-1);
   end
+  
+
+  w_0_m = lambda/(n + lambda);
+  w_0_c = w_0_m - alpha*alpha + 1 + beta;
+  w_i_m = 1/(2*(n + lambda));
+  w_i_c = w_i_m;
 

@@ -152,18 +152,11 @@ P(:,:,1) = P_hat;                           % 'a priori' values
 alpha = .69;
 kappa = 0;
 beta = 2;
-dim = size(x_hat,1);
-lambda = alpha*alpha*(dim + kappa) - dim;
   % Weights for time and obs updates based on sigma vectors
-w_0_m = lambda/(dim + lambda);
-w_0_c = w_0_m - alpha*alpha + 1 + beta;
-w_i_m = 1/(2*(dim + lambda));
-w_i_c = w_i_m;
-w_0_m + 2*dim*w_i_m
- w_0_c + 2*dim*w_i_c
 for ii = 2:nfilt
     % Sigma vectors
-  Chi = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa);
+  [Chi, w_0_m, w_i_m, w_0_c, w_i_c] =...
+                             est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
   n_sigma_vec = size(Chi, 2);
     % Propagate sigma vectors
   for kk = 1:n_sigma_vec
