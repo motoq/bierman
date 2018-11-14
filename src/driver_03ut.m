@@ -155,8 +155,8 @@ beta = 2;
   % Weights for time and obs updates based on sigma vectors
 for ii = 2:nfilt
     % Sigma vectors
-  [Chi, w_0_m, w_i_m, w_0_c, w_i_c] =...
-                             est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
+  [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
+  dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);
     % Propagate sigma vectors
   for kk = 1:n_sigma_vec
@@ -166,15 +166,14 @@ for ii = 2:nfilt
     Chi(4:6,kk) = vel;
   end
     % Propagated estimate and covariance
-  x_bar = w_0_m*Chi(:,1);
-  for kk = 2:(n_sigma_vec) 
-    x_bar = x_bar + w_i_m*Chi(:,kk);
+  x_bar = zeros(dim,1);
+  for kk = 1:n_sigma_vec 
+    x_bar = x_bar + w_m(kk)*Chi(:,kk);
   end
-  chi_minus_xbar = Chi(:,1) - x_bar;
-  P_bar = w_0_c*chi_minus_xbar*chi_minus_xbar';
-  for kk = 2:(n_sigma_vec) 
+  P_bar = zeros(dim);
+  for kk = 1:n_sigma_vec 
     chi_minus_xbar = Chi(:,kk) - x_bar;
-    P_bar = P_bar + w_i_c*chi_minus_xbar*chi_minus_xbar';            % Plus R
+    P_bar = P_bar + w_c(kk)*(chi_minus_xbar*chi_minus_xbar');        % Plus R
   end
     % Computed sigma vector based obs
   Y = zeros(ntkrs,n_sigma_vec);
@@ -183,20 +182,18 @@ for ii = 2:nfilt
       Y(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
     end
   end
-  y_bar = w_0_m*Y(:,1);
-  for kk = 2:(n_sigma_vec)
-    y_bar = y_bar + w_i_m*Y(:,kk);
+  y_bar = zeros(ntkrs,1);
+  for kk = 1:n_sigma_vec
+    y_bar = y_bar + w_m(kk)*Y(:,kk);
   end
     % Observation update
-  y_minus_ybar = Y(:,1) - y_bar;
-  chi_minus_xbar = Chi(:,1) - x_bar;
-  SigmaY_bar = w_0_c*y_minus_ybar*y_minus_ybar';
-  SigmaXY = w_0_c*chi_minus_xbar*y_minus_ybar';
-  for kk = 2:(n_sigma_vec)
+  SigmaY_bar = zeros(ntkrs);
+  SigmaXY = zeros(dim,ntkrs);
+  for kk = 1:n_sigma_vec
     y_minus_ybar = Y(:,kk) - y_bar;
     chi_minus_xbar = Chi(:,kk) - x_bar;
-    SigmaY_bar = SigmaY_bar + w_i_c*y_minus_ybar*y_minus_ybar';
-    SigmaXY = SigmaXY + w_i_c*chi_minus_xbar*y_minus_ybar';
+    SigmaY_bar = SigmaY_bar + w_c(kk)*(y_minus_ybar*y_minus_ybar');
+    SigmaXY = SigmaXY + w_c(kk)*(chi_minus_xbar*y_minus_ybar');
   end
   Rn = srng*srng*eye(ntkrs);
   SigmaY_bar = SigmaY_bar + Rn;
