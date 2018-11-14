@@ -20,8 +20,9 @@ SigmaP0 = [ 3 2 1 ; 2 4 3 ; 1 3 5 ];
 
 alpha = .69;                           % Small positive value, 1e-4 <= a <= 1
 kappa = 0; %3 - L;                     % Secondary scaling parameter
+beta  = 2;
 
-Chi = est_ut_sigma_vec(phat0, SigmaP0, alpha, kappa);
+[Chi, ~, ~] = est_ut_sigma_vec(phat0, SigmaP0, alpha, kappa, beta);
 
   % Plot covariance and sigma vectors
 figure; hold on;
