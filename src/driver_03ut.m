@@ -150,6 +150,7 @@ P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 Rn = srng*srng*eye(ntkrs);
+Rv = 0*P_hat;
 alpha = .69;
 kappa = 0;
 beta = 2;
@@ -159,8 +160,6 @@ for ii = 2:nfilt
   [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
   dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);
-
-
     % Propagate sigma vectors
   for kk = 1:n_sigma_vec
     pos = traj_pos(dt, Chi(1:3,kk), Chi(4:6,kk));
@@ -169,8 +168,7 @@ for ii = 2:nfilt
     Chi(4:6,kk) = vel;
   end
     % Propagated estimate and covariance
-  [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, 0);
-
+  [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, Rv);
     % Computed sigma vector based obs
   Y = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
@@ -178,27 +176,9 @@ for ii = 2:nfilt
       Y(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
     end
   end
-
-
-  y_bar = zeros(ntkrs,1);
-  for kk = 1:n_sigma_vec
-    y_bar = y_bar + w_m(kk)*Y(:,kk);
-  end
-    % Observation update
-  SigmaY_bar = zeros(ntkrs);
-  SigmaXY = zeros(dim,ntkrs);
-  for kk = 1:n_sigma_vec
-    y_minus_ybar = Y(:,kk) - y_bar;
-    chi_minus_xbar = Chi(:,kk) - x_bar;
-    SigmaY_bar = SigmaY_bar + w_c(kk)*(y_minus_ybar*y_minus_ybar');
-    SigmaXY = SigmaXY + w_c(kk)*(chi_minus_xbar*y_minus_ybar');
-  end
-  SigmaY_bar = SigmaY_bar + Rn;
-  K = SigmaXY*SigmaY_bar^-1;
-  x_hat = x_bar + K*(z(:,ii+filt_ndxoff) - y_bar);
-  P_hat = P_bar - K*SigmaY_bar*K';
-
-
+    % Update estimate based on available observations
+  [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c, Y,...
+                                             z(:,ii+filt_ndxoff), Rn);
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end

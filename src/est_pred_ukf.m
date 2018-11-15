@@ -38,3 +38,4 @@ function [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, Rv)
     chi_minus_xbar = Chi(:,kk) - x_bar;
     P_bar = P_bar + w_c(kk)*(chi_minus_xbar*chi_minus_xbar');        % Plus R
   end
+  P_bar = P_bar + Rv;
