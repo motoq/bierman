@@ -149,11 +149,11 @@ x = zeros(6,nfilt);                         % Reset stored estimates
 P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
-Rn = srng*srng*eye(ntkrs);
-Rv = 0*P_hat;
+SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
+SigmaZq = 0*P_hat;                          % Process noise covariance
 alpha = .69;
 kappa = 0;
-beta = 2;
+beta = 2;                                   % Gaussian
   % Weights for time and obs updates based on sigma vectors
 for ii = 2:nfilt
     % Sigma vectors
@@ -168,17 +168,17 @@ for ii = 2:nfilt
     Chi(4:6,kk) = vel;
   end
     % Propagated estimate and covariance
-  [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, Rv);
+  [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, SigmaZq);
     % Computed sigma vector based obs
-  Y = zeros(ntkrs,n_sigma_vec);
+  Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
     for kk = 1:n_sigma_vec
-      Y(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
+      Z(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
     end
   end
     % Update estimate based on available observations
-  [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c, Y,...
-                                             z(:,ii+filt_ndxoff), Rn);
+  [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c, Z,...
+                                             z(:,ii+filt_ndxoff), SigmaZ);
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end

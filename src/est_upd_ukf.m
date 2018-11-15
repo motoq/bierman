@@ -32,7 +32,7 @@ function [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c,...
   n_sigma_vec = size(Chi, 2);
   n_obs = size(Y,1);
 
-
+    % Computed obs based on propagated state
   y_bar = zeros(n_obs,1);
   for kk = 1:n_sigma_vec
     y_bar = y_bar + w_m(kk)*Y(:,kk);
