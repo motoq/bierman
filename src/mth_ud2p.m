@@ -21,9 +21,9 @@ function [P] = mth_ud2p(UD)
 
   U = eye(n);
   D = zeros(n);
-  for ii = 1:n;
+  for ii = 1:n
     D(ii,ii) = UD(ii,ii);
-    for jj = (ii+1):n;
+    for jj = (ii+1):n
       U(ii,jj) = UD(ii,jj);
     end
   end

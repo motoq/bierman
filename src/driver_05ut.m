@@ -166,7 +166,7 @@ for ii = 2:nfilt
   end
   x_hat = x_bar;
   P_hat = SigmaX;
-  SigmaXY = SigmaXY;
+  %SigmaXY = 0.7*SigmaXY;
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
