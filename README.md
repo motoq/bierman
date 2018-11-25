@@ -54,6 +54,12 @@ driver_lls_qrcurvefit.m - detour
 Illustrates sequential estimation via a QR SRIF for a linear problem.
 ```
 
+driver_ut_sigma_vec.m - detour
+```
+Visualization of unscented transform sigma vectors given an estimate
+and covariance.
+```
+
 driver_03.m
 ```
 Estimation of a dynamic state - simple wiffle ball in a room trajectory
@@ -72,6 +78,11 @@ Estimation of a dynamic state - simple wiffle ball in a room trajectory
 
 Illustrates the use of a reference trajectory to produce estimate
 covariance as a function of time using the U-D filter.
+```
+
+driver_03ut.m
+```
+EKF and UKF are compared.
 ```
 
 driver_04.m
@@ -113,6 +124,11 @@ and hybrid SRIF.  The Kalman and U-D methods process one observation at
 a time while the SRIF process measurement sets in batch mode.
 ```
 
+driver_04ut.m
+```
+EKF and UKF are compared under conditions where process noise exists.
+```
+
 driver_05.m
 ```
 The stabilized Kalman, U-D, and hybrid SRIF are run with process noise
@@ -140,5 +156,11 @@ Illustrates the use of a reference trajectory to produce estimate
 covariance as a function of time using the SRIF when process noise
 is present in the filter model and systemic error is present in the
 observation model.
+```
+
+driver_05ut.m
+```
+Both the SKF and UKF with an augmented state vector are compared
+when both process noise and observation bias are present.
 ```
 
