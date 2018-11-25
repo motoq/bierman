@@ -10,7 +10,7 @@
 % Simple wiffle ball in a room trajectory
 %
 % This driver is yet another extension of the _04 series comparing
-% the linearized extended Kalman to the unscented Kalman where both random
+% the extended Kalman to the unscented Kalman where both random
 % observation noise and process "noise" is present.
 %
 % Kurt Motekew  2018/11/14
@@ -116,7 +116,7 @@ x_hat0 = x(:,1);                            % 'a priori' estimate and
 P_hat0 = P(:,:,1);                          % covariance
 
   %
-  % Linearized extended filter via Kalman stabilized method with covariance
+  % Extended filter via Kalman stabilized method with covariance
   % inflation.
   %
 

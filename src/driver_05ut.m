@@ -9,16 +9,18 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% Schmidt Kalman, and unscented Kalman with bias
-% incorporation methods with process noise (prediction update)
-% and bias (observation update error).  An error is added
+% Schmidt Kalman and unscented Kalman with an augmented state vector.
+% Process noise (prediction update) and bias (observation update error)
+% are included and accounted for by each estimator.  An error is added
 % to the positions of each tracker.  Different random errors are added
 % to each component of each tracker.  This bias is held constant for each
-% trajectory.  The Kalman without incorporation of bias is shown as a
-% reference.  The driver_05.m script illustrates both the Kalman and
-% SRIF methods behaved the same with bias (but without bias incorporation).
-% This script will compare the Kalman and SRIF with consider parameter
-% processing.
+% trajectory.  The UKF version accounts for bias by including the consider
+% parameters in the augmented state vector while not actually updating
+% them or their associated covariance.  For some reason the literature
+% describes this as an unscented Schmidt Kalman filter, but it in no
+% way resembles one.  Then again, the UKF doesn't resembly the EKF...
+% Note that unlike the other SKF examples, the estimate/consider cross
+% covariance is not scaled ("tuned").
 %
 % Kurt Motekew  2018/11/24
 %
@@ -169,78 +171,15 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 sck_time = toc;
-res_plot('Linearized Extended Schmidt Consider Kalman',...
+res_plot('SKF with Process Noise and Bias',...
          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('Linearized Extended Kalman Trajectory with Q & Y');
+title('SKF with Process Noise and Bias');
 view([70 20]);
 
-
-
-
-
-
-
-
-
   %
-  % Unscented Kalman version.
-  %
-
-x_hat = x(:,1);                             % 'a priori' estimate and
-P_hat = P(:,:,1);                           % covariance
-x = zeros(6,nfilt);                         % Reset stored estimates
-P = zeros(6,6,nfilt);
-x(:,1) = x_hat;                             % Set first estimate to
-P(:,:,1) = P_hat;                           % 'a priori' values
-SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
-alpha = .69;                                % Dude!
-kappa = 0;
-beta = 2;                                   % Gaussian
-  % Weights for time and obs updates based on sigma vectors
-tic;
-for ii = 2:nfilt
-    % Sigma vectors
-  [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
-  dim = size(Chi,1);
-  n_sigma_vec = size(Chi, 2);
-    % Propagate sigma vectors
-  for kk = 1:n_sigma_vec     
-    pos = traj_pos(dt, Chi(1:3,kk), Chi(4:6,kk));
-    vel = traj_vel(dt, Chi(4:6,kk));
-    Chi(1:3,kk) = pos;
-    Chi(4:6,kk) = vel;
-  end
-    % Propagated estimate and covariance
-  Q = (2*global_b)^2;
-  G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
-  SigmaZq = G*Q*G';
-  [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, SigmaZq);
-    % Computed sigma vector based obs                   
-  Z = zeros(ntkrs,n_sigma_vec);
-  for jj = 1:ntkrs
-    for kk = 1:n_sigma_vec
-      Z(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
-    end
-  end  
-    % Update estimate based on available observations
-  [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c, Z,...
-                                             z(:,ii+filt_ndxoff), SigmaZ);
-  x(:,ii) = x_hat;                                                        
-  P(:,:,ii) = P_hat;
-end
-ukf_time = toc;
-res_plot('UKF with Process Noise',...
-         t(filt_rng), x_true(:,filt_rng), x, P);
-  % Plot geometry
-traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('UKF with Process Noise');
-view([70 20]);
-
-
-  %
-  % Unscented Kalman version.
+  % Unscented Kalman with augmented state
   %
 
 x_hat = x(:,1);                             % 'a priori' estimate and
@@ -271,7 +210,6 @@ for ii = 2:nfilt
     x_hat_a(ndx1:ndx2,1) = tkrs(:,jj);
   end
   P_hat_a = [P_hat SigmaXY ; SigmaXY' SigmaY];
-
     % Sigma vectors
   [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat_a, P_hat_a, alpha, kappa, beta);
   dim = size(Chi,1);
@@ -289,21 +227,20 @@ for ii = 2:nfilt
   SigmaZq = G*Q*G';
   [x_bar_a, P_bar_a] = est_pred_ukf(Chi, w_m, w_c,...
                                [SigmaZq zeros(nx,nc) ; zeros(nc,nx) zeros(nc)]);
-    % Computed sigma vector based obs                   
+    % Computed sigma vector based obs - note use of consider tracker locations
   Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
     ndx1 = nx + (jj-1)*ny + 1;
     ndx2 = ndx1 + 2;
     for kk = 1:n_sigma_vec
-      %Z(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
       Z(jj,kk) = norm(Chi(1:3,kk) - Chi(ndx1:ndx2,kk));
     end
   end  
-
     % Update estimate based on available observations
   [x_hat_a, P_hat_a] = est_upd_ukf(x_bar_a, P_bar_a, Chi, w_m, w_c, Z,...
                                             z(:,ii+filt_ndxoff), SigmaZ);
-
+    % Non-augmented state vector and covariance
+    % Retain cross-covariance but forget consider parameter updates
   x_hat = x_hat_a(1:nx,1);
   P_hat = P_hat_a(1:nx,1:nx);
   SigmaXY = P_hat_a(1:nx,(nx+1):nx_a);
@@ -312,15 +249,14 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 uskf_time = toc;
-res_plot('USKF with Process Noise',...
-         t(filt_rng), x_true(:,filt_rng), x, P);
+res_plot('USKF with Process Noise and Bias',...
+          t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('USKF with Process Noise');
+title('USKF with Process Noise and Bias');
 view([70 20]);
 
 fprintf('\n Schmidt EKF Time:\t%1.4f seconds', sck_time);
-fprintf('\n         UKF Time:\t%1.4f seconds', ukf_time);
 fprintf('\n Schmidt UKF Time:\t%1.4f seconds', uskf_time);
 fprintf('\n');
 

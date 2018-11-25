@@ -1,6 +1,7 @@
 function [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c,...
                                       Y, y, Rn)
-% EST_UPD_UKF Given
+% EST_UPD_UKF Given the current estimate and covariance, update with
+% sigma vector based parameters and computed observations.
 %
 %-----------------------------------------------------------------------
 % Copyright 2018 Kurt Motekew
@@ -17,12 +18,13 @@ function [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c,...
 %          where n is the number of sigma vectors.
 %   w_m    Estimate weighting factors, [1Xn]
 %   w_c    Covariance weighting factors, [1Xn]
-%   Y      Sigma vector based computed observations, [num_obsXn]
-%   y
-%   Rn
+%   Y      Sigma vector based computed observations, [num_obs X n]
+%   y      Observations, [num_obx X 1]
+%   Rn     Process noise, [mxm]
 %
 % Return:
 %   x_hat  State estimate update based on observations
+%   P_hat  Updated estimate covariance
 %
 % Kurt Motekew   2018/11/14
 %

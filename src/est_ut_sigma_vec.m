@@ -28,7 +28,7 @@ function [Chi, w_m, w_c] = est_ut_sigma_vec(phat, SigmaPhat, alpha, kappa, beta)
 
   n = size(phat,1);
   lambda = alpha*alpha*(n + kappa) - n;
-  SigmaPscaled = sqrtm((n + lambda)*SigmaPhat);
+  SigmaPscaled = mth_sqrtm((n + lambda)*SigmaPhat);
 
     % Sigma vector
   Chi = zeros(n, 2*n + 1);

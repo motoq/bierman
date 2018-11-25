@@ -32,10 +32,11 @@ function [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, Rv)
   for kk = 1:n_sigma_vec
     x_bar = x_bar + w_m(kk)*Chi(:,kk);
   end
-    % And covariance
+    % Estimate covariance
   P_bar = zeros(dim);
   for kk = 1:n_sigma_vec
     chi_minus_xbar = Chi(:,kk) - x_bar;
-    P_bar = P_bar + w_c(kk)*(chi_minus_xbar*chi_minus_xbar');        % Plus R
+    P_bar = P_bar + w_c(kk)*(chi_minus_xbar*chi_minus_xbar');
   end
+    % Include process noise
   P_bar = P_bar + Rv;
