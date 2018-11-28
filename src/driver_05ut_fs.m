@@ -9,12 +9,13 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% USKF vs. UKF.  The USKF estimates the trajectory with an augmented
-% state vector that includes the consider parameters.  However, updates
-% to the consider parameter values are not performed and the consider
-% covariance remains fixed.  The UKF version allows the filter to update
-% the consider parameters and covariance.  Process noise and bias are
-% included, as described in driver_05ut.m
+% USKF vs. UKF with an augmented state vector.  The USKF estimates the
+% trajectory with an augmented state vector that includes the consider
+% parameters.  However, updates to the consider parameter values are not
+% performed and the consider covariance remains fixed.  The UKF version in
+% this example allows the filter to update the consider parameters and
+% covariance.  Process noise and bias are included, as described in
+% driver_05ut.m
 %
 % Kurt Motekew  2018/11/25
 %

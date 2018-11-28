@@ -18,9 +18,10 @@
 % parameters in the augmented state vector while not actually updating
 % them or their associated covariance.  For some reason the literature
 % describes this as an unscented Schmidt Kalman filter, but it in no
-% way resembles one.  Then again, the UKF doesn't resembly the EKF...
-% Note that unlike the other SKF examples, the estimate/consider cross
-% covariance is not scaled ("tuned").
+% way resembles one.
+%
+% Note that unlike the other SKF examples in this project, the
+% estimate/consider cross covariance is not scaled ("tuned").
 %
 % Kurt Motekew  2018/11/24
 %
