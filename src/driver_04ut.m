@@ -192,6 +192,8 @@ for ii = 2:nfilt
   G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
   SigmaZq = G*Q*G';
   [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, SigmaZq);
+    % Redraw sigma points to incorporate process noise effects
+  [Chi, w_m, w_c] = est_ut_sigma_vec(x_bar, P_bar, alpha, kappa, beta);
     % Computed sigma vector based obs                   
   Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs

@@ -254,6 +254,8 @@ for ii = 2:nfilt
   SigmaZq = G*Q*G';
   [x_bar_a, P_bar_a] = est_pred_ukf(Chi, w_m, w_c,...
                                [SigmaZq zeros(nx,nc) ; zeros(nc,nx) zeros(nc)]);
+    % Redraw sigma points to incorporate process noise effects
+  [Chi, w_m, w_c] = est_ut_sigma_vec(x_bar_a, P_bar_a, alpha, kappa, beta);
     % Computed sigma vector based obs - note use of consider tracker locations
   Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
