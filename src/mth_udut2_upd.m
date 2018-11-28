@@ -1,9 +1,10 @@
 function [U2, D2] = mth_udut2_upd(U, D, c, a)
-% MTH_UDUT2 decomposes an input covariance P into U and D such that U is a unit
-% upper diagonal matrix and D is a diaginal matrix with P = U*D*U'.
+% MTH_UDUT2 Given P = UDU' where U is a unit diagonal triangular matrix
+% and D is a diagonal matrix (Cholesky decomposition), computes a new
+% U and D for P2 = P + c*a*a' where c is a scalar and a is a vector.
 %
 %-----------------------------------------------------------------------
-% Copyright 2016 Kurt Motekew
+% Copyright 2018 Kurt Motekew
 %
 % This Source Code Form is subject to the terms of the Mozilla Public
 % License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,15 +12,15 @@ function [U2, D2] = mth_udut2_upd(U, D, c, a)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   P   Positive definite symmetrix covariance, [NxN]
-% Return:
 %   U   Unit upper diagonal triangular matrix [NxN]
 %   D   Diagonal matrix [NxN]
+%   c   Scalar
+%   a   Vector [Nx1]
+% Return:
+%   U2   Updated unit upper diagonal triangular matrix [NxN]
+%   D2   Updated diagonal matrix [NxN]
 %
-% Note for conversion to other languages:  P is reused internally.  Since
-% Matlab and Octave pass by copy, it doesn't matter if P is destroyed.
-%
-% Author:  Kurt Motekew    20160802
+% Author:  Kurt Motekew    20181127
 % 
   n = size(D,2);
   U2 = eye(n);
