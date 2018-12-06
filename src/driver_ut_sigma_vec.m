@@ -23,7 +23,7 @@ kappa = 0; %3 - L;                     % Secondary scaling parameter
 beta  = 2;
 
 [Chi, w_m, w_c] = est_ut_sigma_vec(phat0, SigmaP0, alpha, kappa, beta);
-n_params = size(Chi, 1)
+n_params = size(Chi, 1);
 n_sigma_vec = size(Chi, 2);
 
   % Plot covariance and sigma vectors
@@ -50,7 +50,7 @@ mesh(XX + x_curve(1), YY + y_curve(1), ZZ + z_curve(1));
 colormap([.1 .2 .3]);
 hidden('off');
 
-t_curve = 0:.3:1.2;
+t_curve = 0:1:4;
 [x_curve, y_curve, z_curve] = mth_helix_parametric(t_curve, r, c);
 scatter3(x_curve, y_curve, z_curve);
 ax = mth_lpoly_fit(t_curve, x_curve, 4);
@@ -81,7 +81,7 @@ end
 mesh(XX + phat(1), YY + phat(2), ZZ + phat(3));
 hidden('off');
 
-t_curve = 0:.1:1.2;
+t_curve = 0:.1:4;
 x_curve = mth_lpoly_eval(ax, t_curve);
 y_curve = mth_lpoly_eval(ay, t_curve);
 z_curve = mth_lpoly_eval(az, t_curve);

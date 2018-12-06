@@ -1,4 +1,7 @@
 function ai = mth_lpoly_fit(x, y, order)
+% MTH_LPOLY_FIT Creates Lagrange polynomial coefficients given coordinate
+% points.  The system can be overdetermined, resulting in a least squares
+% fit.
 %
 %-----------------------------------------------------------------------
 % Copyright 2018 Kurt Motekew
@@ -9,10 +12,16 @@ function ai = mth_lpoly_fit(x, y, order)
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   x  [1xM]
-%   y  [1xM]
+%   x      Independent variable values [1xM]
+%   y      Observed values [1xM]
+%   order  Polynomial order N, N <= M
 %
-% Kurt Motekew   2018/11/04
+% Output
+%   Polynomial coefficients, [1xN+1].  An nth order polynomial will
+%   contain n + 1 coefficients:
+%     y = ai(1) + ai(2)*x } ai(3)x^2 + ... + ai(n+1)*x^n
+%
+% Kurt Motekew   2018/12/05
 %
 
     % Reduce order to maximum supported by observations
@@ -31,6 +40,7 @@ function ai = mth_lpoly_fit(x, y, order)
   Ai = zeros(1,n);
   ATA = zeros(n);
   ATy = zeros(n,1);
+    % Accumulate obs
   for ii = 1:m
     Ai(1) = 1;
     Ai(2) = x(ii);
@@ -41,6 +51,10 @@ function ai = mth_lpoly_fit(x, y, order)
     ATy = ATy + Ai'*y(ii);
   end
 
-  ai = ATA^-1*ATy;
+    % Solve for coefficients via QR decomp and backwards substitution
+  [Q, R] = mth_qr(ATA);
+  qtaty = Q'*ATy;
+  ai = mth_trisol(R, qtaty);
+    % Return as row vector
   ai = ai';
 
