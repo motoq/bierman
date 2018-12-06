@@ -20,6 +20,8 @@
 % Note that unlike most of the other SKF examples in this project,
 % the estimate/consider cross covariance is not scaled ("tuned").
 %
+% Also note the observation bias has been bumped up by a factor of 10!
+%
 % Kurt Motekew  2018/12/01
 %
 
@@ -44,7 +46,7 @@ x0 = [0.35 0.25 .25 0.2  0.2  1]';
 
   % Tracker locations
 blen = 1;
-sblen = .001*blen;                          % .1% of total distance for tracker
+sblen = .01*blen;                          % .1% of total distance for tracker
 SigmaBlen = sblen*sblen;
 ny = 3;
 tkrs = [                                    % uncertainty

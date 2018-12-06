@@ -16,6 +16,7 @@ function [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, Rv)
 %         number of sigma vectors.
 %   w_m   Estimate weighting factors, [1xn]
 %   w_c   Covariance weighting factors, [1xn]
+%   Rv    Process Noise, [mxm]
 %
 % Return:
 %   x_bar  Updated estimate based on propagated sigma vectors, [mx1]
