@@ -23,7 +23,7 @@ function S = mth_chol_upd(S, c, a)
 % Author:  Kurt Motekew    20181220
 % 
 
-  [U, D] = mth_s2udut2(S)
+  [U, D] = mth_s2udut2(S);
 
   [U, D] = mth_udut2_upd(U, D, c, a);
   S = U*sqrt(D);
