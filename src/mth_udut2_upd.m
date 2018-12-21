@@ -1,7 +1,7 @@
 function [U2, D2] = mth_udut2_upd(U, D, c, a)
-% MTH_UDUT2 Given P = UDU' where U is a unit diagonal triangular matrix
-% and D is a diagonal matrix (Cholesky decomposition), computes a new
-% U and D for P2 = P + c*a*a' where c is a scalar and a is a vector.
+% MTH_UDUT2_UPD Given P = UDU' where U is a unit diagonal triangular
+% matrix and D is a diagonal matrix, computes a new U and D for
+% P2 = P + c*a*a' where 'c' is a scalar and 'a' is a vector.
 %
 %-----------------------------------------------------------------------
 % Copyright 2018 Kurt Motekew
