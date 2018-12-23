@@ -202,6 +202,7 @@ P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
+SrZ = mth_sqrtm(SigmaZ);
 SigmaZq = 0*P_hat;                          % Process noise covariance
 alpha = .69;
 kappa = 0;
@@ -222,7 +223,7 @@ for ii = 2:nfilt
   end
     % Propagated estimate and covariance
   [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, SigmaZq);
-  P_bar = S_bar'*S_bar;
+  %P_bar = S_bar'*S_bar;
 
     % Computed sigma vector based obs
   Z = zeros(ntkrs,n_sigma_vec);
@@ -232,10 +233,9 @@ for ii = 2:nfilt
     end
   end
     % Update estimate based on available observations
-  [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c, Z,...
-                                             z(:,ii+filt_ndxoff), SigmaZ);
-  %[x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c, Z,...
-  %                                             z(:,ii+filt_ndxoff), SigmaZ);
+  [x_hat, P_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c, Z,...
+                                             z(:,ii+filt_ndxoff), SrZ);
+  
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
