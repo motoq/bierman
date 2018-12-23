@@ -223,7 +223,6 @@ for ii = 2:nfilt
   end
     % Propagated estimate and covariance
   [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, SigmaZq);
-  %P_bar = S_bar'*S_bar;
 
     % Computed sigma vector based obs
   Z = zeros(ntkrs,n_sigma_vec);
@@ -233,8 +232,9 @@ for ii = 2:nfilt
     end
   end
     % Update estimate based on available observations
-  [x_hat, P_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c, Z,...
+  [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c, Z,...
                                              z(:,ii+filt_ndxoff), SrZ);
+  P_hat = S_hat*S_hat';
   
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;

@@ -21,7 +21,7 @@ function [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
 % Return:
 %   x_bar  Updated estimate based on propagated sigma vectors, [mx1]
 %   S_bar  Updated estimate covariance square root based on propagated
-%          sigma vectors, [mxm]
+%          sigma vectors, LOWER triangular for now [mxm]
 %
 % Kurt Motekew   2018/12/19  Base4d on  est_pred_ukf
 %
@@ -41,4 +41,4 @@ function [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
   end
   [~, S_bar] = mth_qr(AT');
   S_bar = mth_chol_upd(S_bar, sr_w_c(1), Chi(:,1) - x_bar);
-
+  S_bar = S_bar';
