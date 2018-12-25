@@ -28,14 +28,14 @@ function [Chi, w_m, w_c] = est_ut_sigma_vec(phat, SigmaPhat, alpha, kappa, beta)
 
   n = size(phat,1);
   lambda = alpha*alpha*(n + kappa) - n;
-  SigmaPscaled = mth_sqrtm((n + lambda)*SigmaPhat);
+  ScaledS = mth_sqrtm((n + lambda)*SigmaPhat);
 
     % Sigma vector
   Chi = zeros(n, 2*n + 1);
   Chi(:,1) = phat;
   for ii = 2:(n+1)
-    Chi(:,ii) = phat + SigmaPscaled(:,ii-1);
-    Chi(:,ii+n) = phat - SigmaPscaled(:,ii-1);
+    Chi(:,ii) = phat + ScaledS(:,ii-1);
+    Chi(:,ii+n) = phat - ScaledS(:,ii-1);
   end
   
     % Weighting

@@ -208,10 +208,11 @@ alpha = .69;
 kappa = 0;
 beta = 2;                                   % Gaussian
   % Weights for time and obs updates based on sigma vectors
+[Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
+sr_w_c = sqrt(w_c);
+S_hat = mth_sqrtm(P_hat);
 for ii = 2:nfilt
-    % Sigma vectors
-  [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
-  sr_w_c = sqrt(w_c);
+  Chi = est_ut_srsigma_vec(x_hat, S_hat, alpha, kappa);
   dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);
     % Propagate sigma vectors
