@@ -46,9 +46,9 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
   SigmaXY = zeros(dim,n_obs);
   AT = [Y  Sr_Rn];
   for kk = 1:n_sigma_vec     
-    AT(:,kk) = sr_w_c(kk)*(Y(:,kk) - y_bar);
     y_minus_ybar = Y(:,kk) - y_bar;
     chi_minus_xbar = Chi(:,kk) - x_bar;
+    AT(:,kk) = sr_w_c(kk)*y_minus_ybar;
     SigmaXY = SigmaXY + w_c(kk)*(chi_minus_xbar*y_minus_ybar');
   end
   [~, S_Y_bar] = mth_qr(AT');
@@ -59,7 +59,9 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
 
   U = K*S_Y_bar';
   n = size(U,2);
+
   S_hat = mth_sqrtm(P_bar);
   for kk = 1:n
     S_hat = mth_chol_upd(S_hat, -1, U(:,kk));
   end
+
