@@ -64,4 +64,6 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
   for kk = 1:n
     S_hat = mth_chol_upd(S_hat, -1, U(:,kk));
   end
+  
 
+  
