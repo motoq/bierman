@@ -20,3 +20,7 @@ P3 = P + P2;
 A = [S S2];
 [~, R3] = mth_qr(A');
 fprintf('\nP3 - R3TR3:  %1.3e\n', max(max(abs(P3 - R3'*R3))));
+
+Rh = mth_householder_tri(A');
+fprintf('\nP3 - RhTRh:  %1.3e\n', max(max(abs(P3 - Rh'*Rh))));
+
