@@ -49,6 +49,6 @@ function [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c,...
     SigmaXY = SigmaXY + w_c(kk)*(chi_minus_xbar*y_minus_ybar');
   end
   SigmaY_bar = SigmaY_bar + Rn;
-  K = SigmaXY*SigmaY_bar^-1;
+  K = SigmaXY/SigmaY_bar;
   x_hat = x_bar + K*(y - y_bar);
   P_hat = P_bar - K*SigmaY_bar*K';

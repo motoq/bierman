@@ -115,6 +115,7 @@ P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
+tic;
 for ii = 2:nfilt
     % First propagate state and covariance to new time - no process noise
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
@@ -134,6 +135,7 @@ for ii = 2:nfilt
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
+ekf_time = toc;
 res_plot('EKF', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
@@ -156,6 +158,7 @@ alpha = .69;
 kappa = 0;
 beta = 2;                                   % Gaussian
   % Weights for time and obs updates based on sigma vectors
+tic;
 for ii = 2:nfilt
     % Sigma vectors
   [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
@@ -183,8 +186,7 @@ for ii = 2:nfilt
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
-
-
+ukf_time = toc;
 res_plot('UKF', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
@@ -209,8 +211,13 @@ kappa = 0;
 beta = 2;                                   % Gaussian
   % Weights for time and obs updates based on sigma vectors
 [Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
+if w_c(1) < 0
+  fprintf('\nNegative 0th Covariance Weighting not Supported\n');
+  return;
+end
 sr_w_c = sqrt(w_c);
 S_hat = mth_sqrtm(P_hat);
+tic;
 for ii = 2:nfilt
   Chi = est_ut_srsigma_vec(x_hat, S_hat, alpha, kappa);
   dim = size(Chi,1);
@@ -223,7 +230,7 @@ for ii = 2:nfilt
     Chi(4:6,kk) = vel;
   end
     % Propagated estimate and covariance
-  [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, SigmaZq);
+  [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, SigmaZq);
 
     % Computed sigma vector based obs
   Z = zeros(ntkrs,n_sigma_vec);
@@ -233,17 +240,21 @@ for ii = 2:nfilt
     end
   end
     % Update estimate based on available observations
-  [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c, Z,...
+  [x_hat, S_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c, Z,...
                                                z(:,ii+filt_ndxoff), SrZ);
   P_hat = S_hat*S_hat';
   
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
-
-
+srukf_time = toc;
 res_plot('SRUKF', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('SRUKF Trajectory');
 view([70 20]);
+
+fprintf('\n Kalman Time:\t%1.4f seconds', ekf_time);
+fprintf('\n UKF Time:\t\t%1.4f seconds', ukf_time);
+fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
+fprintf('\n');

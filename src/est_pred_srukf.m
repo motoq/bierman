@@ -1,4 +1,4 @@
-function [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
+function [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
 % EST_PRED_UKF Given propagated sigma vectors, updates an estimate's
 % predicted state and covariance.
 %
@@ -20,10 +20,10 @@ function [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
 %
 % Return:
 %   x_bar  Updated estimate based on propagated sigma vectors, [mx1]
-%   S_bar  Updated estimate covariance square root based on propagated
-%          sigma vectors, LOWER triangular for now [mxm]
+%   L_bar  Updated estimate covariance square root based on propagated
+%          sigma vectors, LOWER triangular such that P = L*L', [mxm]
 %
-% Kurt Motekew   2018/12/19  Base4d on  est_pred_ukf
+% Kurt Motekew   2018/12/19  Based on  est_pred_ukf
 %
 %
 
@@ -35,13 +35,9 @@ function [x_bar, S_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
     x_bar = x_bar + w_m(kk)*Chi(:,kk);
   end
     % Estimate covariance
-  %AT = [Chi(:,2:n_sigma_vec) Sr_Rv];
-  %for kk = 2:n_sigma_vec
   AT = [Chi Sr_Rv];
   for kk = 1:n_sigma_vec
-    %AT(:,kk-1) = sr_w_c(kk)*(Chi(:,kk) - x_bar);
     AT(:,kk) = sr_w_c(kk)*(Chi(:,kk) - x_bar);
   end
-  [~, S_bar] = mth_qr(AT');
-%  S_bar = mth_chol_upd(S_bar, sr_w_c(1), Chi(:,1) - x_bar);
-  S_bar = S_bar';
+  [~, R] = mth_qr(AT');
+  L_bar = R';

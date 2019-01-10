@@ -1,4 +1,4 @@
-function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
+function [x_hat, S_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
                                         Y, y, Sr_Rn)
 % EST_UPD_UKF Given the current estimate and covariance, update with
 % sigma vector based parameters and computed observations.
@@ -13,8 +13,9 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
 %
 % Inputs:
 %   x_bar  Current estimate [mX1]
-%   S_bar  Estimate covariance, square root, currently LOWER triangular [mXm]
-%   Chi    Sigma vectors (used to form x_bar and P_bar), [mXn]
+%   L_bar  Estimate covariance, square root, currently LOWER triangular such
+%          that P = L*L' [mXm]
+%   Chi    Sigma vectors (used to form x_bar and L_bar), [mXn]
 %          where n is the number of sigma vectors.
 %   w_m    Estimate weighting factors, [1Xn]
 %   w_c    Covariance weighting factors, [1Xn]
@@ -24,13 +25,13 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
 %
 % Return:
 %   x_hat  State estimate update based on observations
-%   S_hat  Updated estimate covariance square root, upper triangular, [mxm]
+%   S_hat  Updated estimate covariance square root, upper triangular, such that
+%          P = S_hat*S_hat', [mxm]
 %
 % Kurt Motekew   2018/11/14
 %
 %
 
-  P_bar = S_bar*S_bar';
   w_c = sr_w_c.*sr_w_c;
 
   dim = size(Chi,1);
@@ -52,18 +53,8 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, S_bar, Chi, w_m, sr_w_c,...
     SigmaXY = SigmaXY + w_c(kk)*(chi_minus_xbar*y_minus_ybar');
   end
   [~, S_Y_bar] = mth_qr(AT');
-  SigmaY_bar = S_Y_bar'*S_Y_bar;
 
-  K = SigmaXY*SigmaY_bar^-1;
+  R_Y_bar = mth_triinv(S_Y_bar);
+  K = SigmaXY*(R_Y_bar*R_Y_bar');
   x_hat = x_bar + K*(y - y_bar);
-
-  U = K*S_Y_bar';
-  n = size(U,2);
-
-  S_hat = mth_sqrtm(P_bar);
-  for kk = 1:n
-    S_hat = mth_chol_upd(S_hat, -1, U(:,kk));
-  end
-  
-
-  
+  S_hat = mth_sqrtm(L_bar*L_bar' - K*S_Y_bar'*S_Y_bar*K');

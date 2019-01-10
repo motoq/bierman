@@ -32,7 +32,7 @@ function R = mth_chol(P)
   end
 
   for kk = 2:m
-    jj = 1:(kk-1)
+    for jj = 1:(kk-1)
       R(kk,jj) = 0;
     end
   end
