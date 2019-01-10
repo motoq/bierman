@@ -1,5 +1,5 @@
 %
-% Copyright 2018 Kurt Motekew
+% Copyright 2019 Kurt Motekew
 %
 % This Source Code Form is subject to the terms of the Mozilla Public
 % License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,14 +9,12 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% This driver script compares a standard Kalman to an unscented Kalman
-% filter and a square root version of the unscented  Kalman filter.
-% A simple drag free trajectory is created along with simulated range
-% observations (using range trackers from previous examples) that are
-% subject to only measurement noise.  No process noise or bias effects
-% exist.
+% This driver is yet another extension of the _04 series comparing
+% the extended Kalman to the unscented Kalman and a square root version of
+% the unscented Kalman where both random observation noise and process
+% "noise" is present.
 %
-% Kurt Motekew  2018/12/16
+% Kurt Motekew  2019/01/11
 %
 
 close all;
@@ -25,11 +23,9 @@ clear;
 %
 % Global Variable
 %
-% Set drag coefficient to zero for this initial filtering example
-%
 
 global global_b;
-global_b = 0;
+global_b = 0.05;
 
   %
   % SETUP
@@ -53,6 +49,7 @@ tkrs = [
 ntkrs = size(tkrs,2);
   % Tracker accuracy
 srng = .001;                                % Obs standard deviation
+vrng = srng*srng;                           % Obs variance
 Wsqrt = 1/srng;
 W = Wsqrt*Wsqrt';                           % Obs weighting "matrix"
 
@@ -60,10 +57,18 @@ t0 = 0;                                     % Scenario start time
 tf = 3;                                     % Scenario stop time
 dt = .01;                                   % Data rate
 
+  % Create an ideal trajectory.  This is the model used by the filter
+  % without the influence of observations.
+[~, x_ideal] = traj_ideal(t0, dt, tf, x0);
   % 'True' trajectory for which to generate simulated observations
 [t, x_true] = traj_integ(t0, dt, tf, x0);
   % number of measurement sets - total obs = nsets*ntkrs
 nsets = size(t,2);
+
+  % Plot geometry
+traj_plot(x_ideal, x_true, tkrs, blen);
+title('Boxed Tracker Geometry');
+view([70 20]);
 
 %
 % Create simulated range measurements
@@ -105,11 +110,19 @@ filt_ndxoff = ninit - 1;
 filt_rng = ninit:(filt_ndxoff + nfilt);
 
   %
-  % Extended Kalman filter
+  % 'a priori' estimate and covariance to prime filters
   %
 
-x_hat = x(:,1);                             % 'a priori' estimate and
-P_hat = P(:,:,1);                           % covariance
+x_hat0 = x(:,1);                            % 'a priori' estimate and
+P_hat0 = P(:,:,1);                          % covariance
+
+  %
+  % Extended filter via Kalman stabilized method with covariance
+  % inflation.
+  %
+
+x_hat = x_hat0;
+P_hat = P_hat0;
 x = zeros(6,nfilt);                         % Reset stored estimates
 P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
@@ -117,11 +130,15 @@ P(:,:,1) = P_hat;                           % 'a priori' values
 Phi = traj_strans(dt);                      % Fixed state transition matrix
 tic;
 for ii = 2:nfilt
-    % First propagate state and covariance to new time - no process noise
+    % First propagate state and covariance to new time - add
+    % process noise when propagating covariance
   pos = traj_pos(dt, x_hat(1:3), x_hat(4:6));
   vel = traj_vel(dt, x_hat(4:6));
   x_bar = [pos ; vel];
-  P_bar = Phi*P_hat*Phi';  % See driver_05 for process noise
+  %Q = (.5*global_b)^2;
+  Q = (2*global_b)^2;
+  G = -[.5*vel*dt ; vel]*dt;
+  P_bar = Phi*P_hat*Phi' + G*Q*G';
     % Obs update based on observed (z) vs. computed (zc) residual (r)
   for jj = 1:ntkrs
     Ax = zeros(1,6);
@@ -135,15 +152,16 @@ for ii = 2:nfilt
   x(:,ii) = x_hat;
   P(:,:,ii) = P_hat;
 end
-ekf_time = toc;
-res_plot('EKF', t(filt_rng), x_true(:,filt_rng), x, P);
+kal_time = toc;
+res_plot('EKF with Process Noise',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('EKF Trajectory');
+title('EKF with Process Noise');
 view([70 20]);
 
   %
-  % Unscented Kalman filter
+  % Unscented Kalman version.
   %
 
 x_hat = x(:,1);                             % 'a priori' estimate and
@@ -153,8 +171,7 @@ P = zeros(6,6,nfilt);
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
-SigmaZq = 0*P_hat;                          % Process noise covariance
-alpha = .69;
+alpha = .69;                                % Dude!
 kappa = 0;
 beta = 2;                                   % Gaussian
   % Weights for time and obs updates based on sigma vectors
@@ -165,32 +182,38 @@ for ii = 2:nfilt
   dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);
     % Propagate sigma vectors
-  for kk = 1:n_sigma_vec
+  for kk = 1:n_sigma_vec     
     pos = traj_pos(dt, Chi(1:3,kk), Chi(4:6,kk));
     vel = traj_vel(dt, Chi(4:6,kk));
     Chi(1:3,kk) = pos;
     Chi(4:6,kk) = vel;
   end
     % Propagated estimate and covariance
+  Q = (2*global_b)^2;
+  G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
+  SigmaZq = G*Q*G';
   [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, SigmaZq);
-    % Computed sigma vector based obs
+    % Redraw sigma points to incorporate process noise effects
+  [Chi, w_m, w_c] = est_ut_sigma_vec(x_bar, P_bar, alpha, kappa, beta);
+    % Computed sigma vector based obs                   
   Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
     for kk = 1:n_sigma_vec
       Z(jj,kk) = norm(Chi(1:3,kk) - tkrs(:,jj));
     end
-  end
+  end  
     % Update estimate based on available observations
   [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c, Z,...
                                              z(:,ii+filt_ndxoff), SigmaZ);
-  x(:,ii) = x_hat;
+  x(:,ii) = x_hat;                                                        
   P(:,:,ii) = P_hat;
 end
 ukf_time = toc;
-res_plot('UKF', t(filt_rng), x_true(:,filt_rng), x, P);
+res_plot('UKF with Process Noise',...
+         t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('UKF Trajectory');
+title('UKF with Process Noise');
 view([70 20]);
 
   %
@@ -205,7 +228,6 @@ x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
 SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
 SrZ = mth_sqrtm(SigmaZ);
-SrZq = 0*P_hat;                             % Process noise sqrt covariance
 alpha = .69;
 kappa = 0;
 beta = 2;                                   % Gaussian
@@ -230,7 +252,9 @@ for ii = 2:nfilt
     Chi(4:6,kk) = vel;
   end
     % Propagated estimate and covariance
-  [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, SrZq);
+  srQ = 2*global_b;
+  G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
+  [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, G*srQ);
 
     % Computed sigma vector based obs
   Z = zeros(ntkrs,n_sigma_vec);
@@ -254,7 +278,8 @@ traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('SRUKF Trajectory');
 view([70 20]);
 
-fprintf('\n Kalman Time:\t%1.4f seconds', ekf_time);
+fprintf('\n Kalman Time:\t%1.4f seconds', kal_time);
 fprintf('\n UKF Time:\t\t%1.4f seconds', ukf_time);
 fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
 fprintf('\n');
+
