@@ -1,4 +1,4 @@
-function [x_hat, S_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
+function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
                                         Y, y, Sr_Rn)
 % EST_UPD_UKF Given the current estimate and covariance, update with
 % sigma vector based parameters and computed observations.
@@ -25,8 +25,8 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
 %
 % Return:
 %   x_hat  State estimate update based on observations
-%   S_hat  Updated estimate covariance square root, upper triangular, such that
-%          P = S_hat*S_hat', [mxm]
+%   L_hat  Updated estimate covariance square root, lower triangular, such that
+%          P = L_hat*L_hat', [mxm]
 %
 % Kurt Motekew   2018/11/14
 %
@@ -57,4 +57,13 @@ function [x_hat, S_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
   R_Y_bar = mth_triinv(S_Y_bar);
   K = SigmaXY*(R_Y_bar*R_Y_bar');
   x_hat = x_bar + K*(y - y_bar);
-  S_hat = mth_sqrtm(L_bar*L_bar' - K*S_Y_bar'*S_Y_bar*K');
+  
+  U = K*S_Y_bar;
+  n = size(U, 2);
+  L_hat = L_bar;
+  for kk = 1:n
+    L_hat = mth_chol_upd_l(L_hat, -1, U(:,kk));
+  end
+ 
+  %Upper triangular double check
+  %S_hat = mth_sqrtm(L_bar*L_bar' - K*S_Y_bar'*S_Y_bar*K');
