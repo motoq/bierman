@@ -255,7 +255,8 @@ for ii = 2:nfilt
   srQ = 2*global_b;
   G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
   [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, G*srQ);
-
+    % Redraw sigma points to incorporate process noise effects
+  Chi = est_ut_srsigma_vec(x_bar, L_bar, alpha, kappa);
     % Computed sigma vector based obs
   Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs

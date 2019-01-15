@@ -23,6 +23,8 @@
 % Note that unlike the other SKF examples in this project, the
 % estimate/consider cross covariance is not scaled ("tuned").
 %
+% Square root version in progress...
+%
 % Kurt Motekew  2018/11/24
 %
 
@@ -200,6 +202,7 @@ nx_a = nx + nc;                             % Augmented state vector size
 SigmaXY = zeros(nx,nc);                     % Cross covariance
 SigmaY = SigmaBlen*eye(nc);                 % Fixed consider covariance
 x_hat_a = zeros(nx_a,1);                    % Augmented state vector
+  % Weights for time and obs updates based on sigma vectors
 tic;
 for ii = 2:nfilt
     % Fill in augmented state vector and covariance
@@ -258,7 +261,90 @@ traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('USKF with Process Noise and Bias');
 view([70 20]);
 
+  %
+  % Square Root Unscented Kalman filter with augmented state
+  %
+
+x_hat = x(:,1);                             % 'a priori' estimate and
+P_hat = P(:,:,1);                           % covariance
+x = zeros(6,nfilt);                         % Reset stored estimates
+P = zeros(6,6,nfilt);
+x(:,1) = x_hat;                             % Set first estimate to
+P(:,:,1) = P_hat;                           % 'a priori' values
+SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
+SrZ = mth_sqrtm(SigmaZ);
+alpha = .69;
+kappa = 0;
+beta = 2;                                   % Gaussian
+
+nx = size(x_hat,1);                         % # solve for params
+nc = ny*ntkrs;                              % # total consider params
+nx_a = nx + nc;                             % Augmented state vector size
+SigmaXY = zeros(nx,nc);                     % Cross covariance
+SigmaY = SigmaBlen*eye(nc);                 % Fixed consider covariance
+x_hat_a = zeros(nx_a,1);                    % Augmented state vector
+x_hat_a(1:nx) = x_hat;
+for ii = 1:ntkrs
+  ndx1 = nx + (ii-1)*ny + 1;
+  ndx2 = ndx1 + 2;
+  x_hat_a(ndx1:ndx2,1) = tkrs(:,ii);
+end
+P_hat_a = [P_hat SigmaXY ; SigmaXY' SigmaY];
+  % Get weights
+[Chi, w_m, w_c] = est_ut_sigma_vec(x_hat_a, P_hat_a, alpha, kappa, beta);
+if w_c(1) < 0
+  fprintf('\nNegative 0th Covariance Weighting not Supported\n');
+  return;
+end
+sr_w_c = sqrt(w_c);
+S_hat_a = mth_sqrtm(P_hat_a);
+tic;
+for ii = 2:nfilt
+  Chi = est_ut_srsigma_vec(x_hat_a, S_hat_a, alpha, kappa);
+  dim = size(Chi,1);
+  n_sigma_vec = size(Chi, 2);
+    % Propagate sigma vectors
+  for kk = 1:n_sigma_vec
+    pos = traj_pos(dt, Chi(1:3,kk), Chi(4:6,kk));
+    vel = traj_vel(dt, Chi(4:6,kk));
+    Chi(1:3,kk) = pos;
+    Chi(4:6,kk) = vel;
+  end
+    % Propagated estimate and covariance
+  srQ = 2*global_b;
+  G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
+  %[x_bar_a, L_bar_a] = est_pred_srukf(Chi, w_m, sr_w_c, G*srQ);
+  [x_bar_a, L_bar_a] = est_pred_srukf(Chi, w_m, sr_w_c, [G*srQ ; zeros(nc,1)]);
+    % Redraw sigma points to incorporate process noise effects
+  Chi = est_ut_srsigma_vec(x_bar_a, L_bar_a, alpha, kappa);
+  
+    % Computed sigma vector based obs
+  Z = zeros(ntkrs,n_sigma_vec);
+  for jj = 1:ntkrs
+    ndx1 = nx + (jj-1)*ny + 1;
+    ndx2 = ndx1 + 2;
+    for kk = 1:n_sigma_vec
+      Z(jj,kk) = norm(Chi(1:3,kk) - Chi(ndx1:ndx2,kk));
+    end
+  end
+    % Update estimate based on available observations
+  [x_hat_a, S_hat_a] = est_upd_srukf(x_bar_a, L_bar_a, Chi, w_m, sr_w_c, Z,...
+                                                     z(:,ii+filt_ndxoff), SrZ);
+  S_hat = S_hat_a(1:nx,1:nx);
+  P_hat = S_hat*S_hat';
+  
+  x(:,ii) = x_hat_a(1:nx);
+  P(:,:,ii) = P_hat;
+end
+srukf_time = toc;
+res_plot('SRUKF', t(filt_rng), x_true(:,filt_rng), x, P);
+  % Plot geometry
+traj_plot(x, x_true(:,filt_rng), tkrs, blen);
+title('SRUKF Trajectory');
+view([70 20]);
+
 fprintf('\n Schmidt EKF Time:\t%1.4f seconds', sck_time);
 fprintf('\n Schmidt UKF Time:\t%1.4f seconds', uskf_time);
+fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
 fprintf('\n');
 
