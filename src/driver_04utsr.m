@@ -232,7 +232,7 @@ alpha = .69;
 kappa = 0;
 beta = 2;                                   % Gaussian
   % Weights for time and obs updates based on sigma vectors
-[Chi, w_m, w_c] = est_ut_sigma_vec(x_hat, P_hat, alpha, kappa, beta);
+[w_m, w_c] = est_ut_sigma_weights(size(x_hat,1), alpha, kappa, beta);
 if w_c(1) < 0
   fprintf('\nNegative 0th Covariance Weighting not Supported\n');
   return;

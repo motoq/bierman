@@ -291,7 +291,7 @@ for ii = 1:ntkrs
 end
 P_hat_a = [P_hat SigmaXY ; SigmaXY' SigmaY];
   % Get weights
-[Chi, w_m, w_c] = est_ut_sigma_vec(x_hat_a, P_hat_a, alpha, kappa, beta);
+[w_m, w_c] = est_ut_sigma_weights(nx_a, alpha, kappa, beta);
 if w_c(1) < 0
   fprintf('\nNegative 0th Covariance Weighting not Supported\n');
   return;
