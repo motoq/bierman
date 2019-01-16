@@ -1,10 +1,10 @@
 function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
-                                        Y, y, Sr_Rn)
+                                        Y, y, Sr_Rn, nc)
 % EST_UPD_UKF Given the current estimate and covariance, update with
 % sigma vector based parameters and computed observations.
 %
 %-----------------------------------------------------------------------
-% Copyright 2018 Kurt Motekew
+% Copyright 2019 Kurt Motekew
 %
 % This Source Code Form is subject to the terms of the Mozilla Public
 % License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,23 +12,23 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
 %-----------------------------------------------------------------------
 %
 % Inputs:
-%   x_bar  Current estimate [mX1]
-%   L_bar  Estimate covariance, square root, currently LOWER triangular such
-%          that P = L*L' [mXm]
-%   Chi    Sigma vectors (used to form x_bar and L_bar), [mXn]
-%          where n is the number of sigma vectors.
-%   w_m    Estimate weighting factors, [1Xn]
-%   w_c    Covariance weighting factors, [1Xn]
-%   Y      Sigma vector based computed observations, [num_obs X n]
-%   y      Observations, [num_obx X 1]
-%   Rn     Process noise, [mxm]
+%   x_bar    Current estimate [mX1]
+%   L_bar    Estimate covariance, square root, LOWER triangular such
+%            that P = L*L' [mXm]
+%   Chi      Sigma vectors (used to form x_bar and L_bar), [mXn]
+%            where n is the number of sigma vectors.
+%   w_m      Estimate weighting factors, [1Xn]
+%   sr_ww_c  Square root of covariance weighting factors, [1Xn]
+%   Y        Sigma vector based computed observations, [num_obs X n]
+%   y        Observations, [num_obx X 1]
+%   Sr_Rn    Square root of observation noise, [mxm]
 %
 % Return:
 %   x_hat  State estimate update based on observations
 %   L_hat  Updated estimate covariance square root, lower triangular, such that
 %          P = L_hat*L_hat', [mxm]
 %
-% Kurt Motekew   2018/11/14
+% Kurt Motekew   2019/01/15
 %
 %
 
@@ -56,13 +56,25 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
 
   R_Y_bar = mth_triinv(S_Y_bar);
   K = SigmaXY*(R_Y_bar*R_Y_bar');
-  x_hat = x_bar + K*(y - y_bar);
   
   U = K*S_Y_bar;
   n = size(U, 2);
   L_hat = L_bar;
   for kk = 1:n
     L_hat = mth_chol_upd_l(L_hat, -1, U(:,kk));
+  end
+
+  if (nargin == 9)  &&  (nc > 0)
+    np = dim-nc;
+    Kc = [zeros(np,n_obs) ; K((np+1):dim,:)];
+    U2 = Kc*S_Y_bar;
+    for kk = 1:n
+      L_hat = mth_chol_upd_l(L_hat, 1, U2(:,kk));
+    end
+    K((np+1):dim,:) = zeros(nc,n_obs);
+    x_hat = x_bar + K*(y - y_bar);
+  else
+    x_hat = x_bar + K*(y - y_bar);
   end
  
   %Upper triangular double check

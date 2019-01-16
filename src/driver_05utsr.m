@@ -329,7 +329,7 @@ for ii = 2:nfilt
   end
     % Update estimate based on available observations
   [x_hat_a, S_hat_a] = est_upd_srukf(x_bar_a, L_bar_a, Chi, w_m, sr_w_c, Z,...
-                                                     z(:,ii+filt_ndxoff), SrZ);
+                                              z(:,ii+filt_ndxoff), SrZ, nc);
   S_hat = S_hat_a(1:nx,1:nx);
   P_hat = S_hat*S_hat';
   
