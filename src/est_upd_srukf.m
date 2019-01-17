@@ -1,7 +1,11 @@
 function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
-                                        Y, y, Sr_Rn, nc)
-% EST_UPD_UKF Given the current estimate and covariance, update with
-% sigma vector based parameters and computed observations.
+                                                           Y, y, Sr_Rn, nc)
+% EST_UPD_SRUKF Given the current estimate and covariance, update with
+% sigma vector based parameters and computed observations using a square root
+% formulation of the unscented Kalman filter.  The input estimate may be an
+% augmented state vector with consider parameters (this must be reflected in
+% the input estimate covariance).  Consider parameters and the consider
+% portion of the covariance (square root) will also not be altered.
 %
 %-----------------------------------------------------------------------
 % Copyright 2019 Kurt Motekew
@@ -18,10 +22,14 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
 %   Chi      Sigma vectors (used to form x_bar and L_bar), [mXn]
 %            where n is the number of sigma vectors.
 %   w_m      Estimate weighting factors, [1Xn]
-%   sr_ww_c  Square root of covariance weighting factors, [1Xn]
+%   sr_w_c   Square root of covariance weighting factors, [1Xn]
 %   Y        Sigma vector based computed observations, [num_obs X n]
 %   y        Observations, [num_obx X 1]
 %   Sr_Rn    Square root of observation noise, [mxm]
+%   nc       Number of parameters to consider but not update.  The
+%            last nc entries in x_bar.  If zero, then you probably don't
+%            know what you are doing and are trying to hack it with
+%            process noise because you are incompetent...
 %
 % Return:
 %   x_hat  State estimate update based on observations
@@ -30,14 +38,11 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
 %
 % Kurt Motekew   2019/01/15
 %
-%
 
   w_c = sr_w_c.*sr_w_c;
-
   dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);
   n_obs = size(Y,1);
-
     % Computed obs based on propagated state
   y_bar = zeros(n_obs,1);
   for kk = 1:n_sigma_vec
@@ -52,18 +57,20 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
     AT(:,kk) = sr_w_c(kk)*y_minus_ybar;
     SigmaXY = SigmaXY + w_c(kk)*(chi_minus_xbar*y_minus_ybar');
   end
+    % Compute Kalman gain
   [~, S_Y_bar] = mth_qr(AT');
-
   R_Y_bar = mth_triinv(S_Y_bar);
   K = SigmaXY*(R_Y_bar*R_Y_bar');
-  
+    % Apply to estimate covariance square root via successive
+    % rank one downdates
   U = K*S_Y_bar;
   n = size(U, 2);
   L_hat = L_bar;
   for kk = 1:n
     L_hat = mth_chol_upd_l(L_hat, -1, U(:,kk));
   end
-
+    % If consider parameters are present, reset that portion of
+    % the covariance square root via successive rank one updates...
   if (nargin == 9)  &&  (nc > 0)
     np = dim-nc;
     Kc = [zeros(np,n_obs) ; K((np+1):dim,:)];
@@ -71,11 +78,11 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
     for kk = 1:n
       L_hat = mth_chol_upd_l(L_hat, 1, U2(:,kk));
     end
+      % ...and modify the Kalman gain to not affect the consider parameters
     K((np+1):dim,:) = zeros(nc,n_obs);
     x_hat = x_bar + K*(y - y_bar);
   else
+      % ...otherwise just knock it out,
     x_hat = x_bar + K*(y - y_bar);
   end
  
-  %Upper triangular double check
-  %S_hat = mth_sqrtm(L_bar*L_bar' - K*S_Y_bar'*S_Y_bar*K');

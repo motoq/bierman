@@ -312,12 +312,10 @@ for ii = 2:nfilt
   end
     % Propagated estimate and covariance
   srQ = 2*global_b;
-  G = -[.5*Chi(4:6,1)*dt ; Chi(4:6,1)]*dt;
-  %[x_bar_a, L_bar_a] = est_pred_srukf(Chi, w_m, sr_w_c, G*srQ);
+  G = -[.5*x_hat_a(4:6)*dt ; x_hat_a(4:6)]*dt;
   [x_bar_a, L_bar_a] = est_pred_srukf(Chi, w_m, sr_w_c, [G*srQ ; zeros(nc,1)]);
     % Redraw sigma points to incorporate process noise effects
   Chi = est_ut_srsigma_vec(x_bar_a, L_bar_a, alpha, kappa);
-  
     % Computed sigma vector based obs
   Z = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
@@ -337,14 +335,14 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 srukf_time = toc;
-res_plot('SRUKF', t(filt_rng), x_true(:,filt_rng), x, P);
+res_plot('SUKF', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('SRUKF Trajectory');
+title('SUKF Trajectory');
 view([70 20]);
 
 fprintf('\n Schmidt EKF Time:\t%1.4f seconds', sck_time);
 fprintf('\n Schmidt UKF Time:\t%1.4f seconds', uskf_time);
-fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
+fprintf('\n SUKF Time:\t\t%1.4f seconds', srukf_time);
 fprintf('\n');
 

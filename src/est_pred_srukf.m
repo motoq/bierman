@@ -1,6 +1,7 @@
 function [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
-% EST_PRED_UKF Given propagated sigma vectors, updates an estimate's
-% predicted state and covariance.
+% EST_PRED_SRUKF Square root form of the unscented Kalman filter prediction/
+% propagation step.  The propagated sigma vectors are input and condensed
+% into an updated estimate and estimate square root.
 %
 %-----------------------------------------------------------------------
 % Copyright 2018 Kurt Motekew
@@ -24,7 +25,6 @@ function [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
 %          sigma vectors, LOWER triangular such that P = L*L', [mxm]
 %
 % Kurt Motekew   2018/12/19  Based on  est_pred_ukf
-%
 %
 
   dim = size(Chi,1);
