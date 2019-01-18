@@ -1,5 +1,5 @@
 function [w_m, w_c] = est_ut_sigma_weights(n, alpha, kappa, beta)
-% EST_UT_SIGMA_WEIGHTS computes the unscented transform sigma vector and
+% EST_UT_SIGMA_WEIGHTS computes the unscented transform estimate and
 % covariance scaling weights given "tuning" parameters.
 %
 %-----------------------------------------------------------------------

@@ -12,7 +12,7 @@ function Chi = est_ut_srsigma_vec(phat, Shat, alpha, kappa)
 %
 % Inputs:
 %   phat   Estimate vector, [nx1]
-%   Shat   Square root of 1-sigma covariance of phat, [nxn]
+%   Shat   Square root of 1-sigma covariance of phat, such that P = S*S' [nxn]
 %   alpha  Scaling parameter, small value typically 1e-4 <= alpha <=1
 %   kappa  Secondary scaling parameter, often zero
 %

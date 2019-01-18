@@ -1,5 +1,5 @@
 %
-% Copyright 2018 Kurt Motekew
+% Copyright 2018, 2019 Kurt Motekew
 %
 % This Source Code Form is subject to the terms of the Mozilla Public
 % License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 %
 % Simple wiffle ball in a room trajectory
 %
-% Schmidt Kalman and unscented Kalman with an augmented state vector.
+% Schmidt, unscented, and square root unscented Kalman comparison.
 % Process noise (prediction update) and bias (observation update error)
 % are included and accounted for by each estimator.  An error is added
 % to the positions of each tracker.  Different random errors are added
@@ -22,8 +22,6 @@
 %
 % Note that unlike the other SKF examples in this project, the
 % estimate/consider cross covariance is not scaled ("tuned").
-%
-% Square root version in progress...
 %
 % Kurt Motekew  2018/11/24
 %
@@ -335,14 +333,14 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 srukf_time = toc;
-res_plot('SUKF', t(filt_rng), x_true(:,filt_rng), x, P);
+res_plot('SRUKF', t(filt_rng), x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
-title('SUKF Trajectory');
+title('SRUKF Trajectory');
 view([70 20]);
 
 fprintf('\n Schmidt EKF Time:\t%1.4f seconds', sck_time);
 fprintf('\n Schmidt UKF Time:\t%1.4f seconds', uskf_time);
-fprintf('\n SUKF Time:\t\t%1.4f seconds', srukf_time);
+fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
 fprintf('\n');
 
