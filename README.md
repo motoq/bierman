@@ -82,7 +82,12 @@ covariance as a function of time using the U-D filter.
 
 driver_03ut.m
 ```
-EKF and UKF are compared.
+EKF and UKF are compared.  See driver_05utsr.m.
+```
+
+driver_03utsr.m
+```
+EKF and square root UKF are compared.  See driver_05utsr.m.
 ```
 
 driver_04.m
@@ -127,6 +132,13 @@ a time while the SRIF process measurement sets in batch mode.
 driver_04ut.m
 ```
 EKF and UKF are compared under conditions where process noise exists.
+See driver_05utsr.m.
+```
+
+driver_04utsr.m
+```
+EKF and square root UKF are compared under conditions where process noise
+exists.  See driver_05utsr.m.
 ```
 
 driver_05.m
@@ -161,6 +173,40 @@ observation model.
 driver_05ut.m
 ```
 Both the SKF and UKF with an augmented state vector are compared
-when both process noise and observation bias are present.
+when both process noise and observation bias are present.  See driver_05utsr.m.
+```
+
+driver_05utsr.m
+```
+All of the unscented Kalman filter examples have references this example.  It
+compares the SKF, UKF, and square root UKF (SRUKF).  The unscented Kalman
+really shines compared to other filters when observation model bias is present.
+In fact, the author would argue most of the issues encountered with traditional
+filtering problems that are passed off to being due to nonlinearities are, in
+reality, due to observation bias not being properly accounted for.  If your
+filter only includes process noise and you are OK with that, then you probably
+don't fully understand what you are doing...
+
+Therefore, this square root form, which should guarantee estimate covariance
+stability, is the focus of the use of the unscented transform in this project.
+This driver function and the square root form of the UKF will receive the most
+use and best documentation.  While the square root form is computationally more
+expensive than the standard UKF, the UKF is already significantly (order of
+magnitude) slower than the EKF.  Therefore, if the benefits of the UKF are
+desired, one might as well start with the full blown square root form.
+
+This example includes observation model bias.  Compensating for observation
+bias through the UT form of the Kalman filter requires augmenting the state
+vector and associated covariance with consider parameters.  The observation
+update step accounts for the influence of bias in both the state and covariance
+update, but does not modify the consider parameters nor associated covariance.
+This has been coined a Schmidt Kalman although it in no way resembles the
+Schmidt Kalman that only considers the bias parameters.
+
+The downside to this adding consider parameters to the state vector is a
+significant increase in the computational burden for realistic filtering
+problems.  The upside is the UKF digests observation bias much better than
+the Schmidt Kalman and SRIF while reporting realistic estimate covariance.
+If one can spare the extra CPU cycles, it is the way to go.
 ```
 

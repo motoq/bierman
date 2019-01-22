@@ -60,10 +60,11 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
     % Compute Kalman gain
   [~, S_Y_bar] = mth_qr(AT');
   R_Y_bar = mth_triinv(S_Y_bar);
+    % P = S_Y_bar'*S_Y_bar -> P^-1 = S_Y_bar^-1*S_Y_bar^-1'
   K = SigmaXY*(R_Y_bar*R_Y_bar');
     % Apply to estimate covariance square root via successive
     % rank one downdates
-  U = K*S_Y_bar;
+  U = K*S_Y_bar';
   n = size(U, 2);
   L_hat = L_bar;
   for kk = 1:n
@@ -74,7 +75,7 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
   if (nargin == 9)  &&  (nc > 0)
     np = dim-nc;
     Kc = [zeros(np,n_obs) ; K((np+1):dim,:)];
-    U2 = Kc*S_Y_bar;
+    U2 = Kc*S_Y_bar';
     for kk = 1:n
       L_hat = mth_chol_upd_l(L_hat, 1, U2(:,kk));
     end
