@@ -26,6 +26,12 @@ function [x_bar, L_bar] = est_pred_srukf(Chi, w_m, sr_w_c, Sr_Rv)
 %
 % Kurt Motekew   2018/12/19  Based on  est_pred_ukf
 %
+% Ref:  Rudolph van der Merwe & Eric A. Wan, "The Square-Root Unscented
+%       Kalman Filter for State and Parameter Estimation"
+%
+% Note this implementation of the square root UKF assumes the covariance
+% weighting factors are all positive (see the input sr_w_c).
+%
 
   dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);

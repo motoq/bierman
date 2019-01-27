@@ -22,6 +22,9 @@ function [w_m, w_c] = est_ut_sigma_weights(n, alpha, kappa, beta)
 %
 % Kurt Motekew   2019/01/16
 %
+% Ref:  Rudolph van der Merwe & Eric A. Wan, "The Unscented Kalman Filter
+%       for Nonlinear Estimation"
+%
 
   lambda = alpha*alpha*(n + kappa) - n;
     % Weighting

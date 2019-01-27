@@ -28,6 +28,8 @@ function [x_hat, P_hat] = est_upd_ukf(x_bar, P_bar, Chi, w_m, w_c,...
 %
 % Kurt Motekew   2018/11/14
 %
+% Ref:  Rudolph van der Merwe & Eric A. Wan, "The Unscented Kalman Filter
+%       for Nonlinear Estimation"
 %
 
   dim = size(Chi,1);

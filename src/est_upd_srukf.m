@@ -33,10 +33,16 @@ function [x_hat, L_hat] = est_upd_srukf(x_bar, L_bar, Chi, w_m, sr_w_c,...
 %
 % Return:
 %   x_hat  State estimate update based on observations
-%   L_hat  Updated estimate covariance square root, lower triangular, such that
-%          P = L_hat*L_hat', [mxm]
+%   L_hat  Updated estimate covariance square root, lower triangular, such
+%          that P = L_hat*L_hat', [mxm]
 %
 % Kurt Motekew   2019/01/15
+%
+% Ref:  Jeroen L. Geeraert & Jay W. McMahon, "Square-Root Unscented
+%       Schmidt-Kalman Filter"
+%
+% Note this implementation of the square root UKF assumes the covariance
+% weighting factors are all positive (see the input sr_w_c).
 %
 
   w_c = sr_w_c.*sr_w_c;

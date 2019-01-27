@@ -25,6 +25,9 @@ function [Chi, w_m, w_c] = est_ut_sigma_vec(phat, SigmaPhat, alpha, kappa, beta)
 %
 % Kurt Motekew   2018/11/07
 %
+% Ref:  Rudolph van der Merwe & Eric A. Wan, "The Unscented Kalman Filter
+%       for Nonlinear Estimation"
+%
 
   n = size(phat,1);
   lambda = alpha*alpha*(n + kappa) - n;

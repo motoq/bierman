@@ -22,8 +22,11 @@ function L2 = mth_chol_upd_l(L, beta, v)
 %
 % Author:  Kurt Motekew    20190110
 %
-% Ref:  Krause & Igel, "A More Efficient Rank-one Covariance Matrix Update for
-%       Evolution Strategies"
+% Ref:  Oswin Krause & Christian Igel, "A More Efficient Rank-one
+%       Covariance Matrix Update for Evolution Strategies"
+%
+% Note this is the traditional update, not the more efficient
+% version introduced in the above reference.
 % 
 
   w = v;

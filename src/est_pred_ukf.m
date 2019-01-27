@@ -24,6 +24,9 @@ function [x_bar, P_bar] = est_pred_ukf(Chi, w_m, w_c, Rv)
 %
 % Kurt Motekew   2018/11/14
 %
+% Ref:  Rudolph van der Merwe & Eric A. Wan, "The Unscented Kalman Filter
+%       for Nonlinear Estimation"
+%
 %
 
   dim = size(Chi,1);
