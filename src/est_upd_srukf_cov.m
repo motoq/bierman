@@ -70,7 +70,7 @@ function L_hat = est_upd_srukf_cov(x_bar, L_bar, Chi, w_m, sr_w_c, Y, Sr_Rn, nc)
   end
     % If consider parameters are present, reset that portion of
     % the covariance square root via successive rank one updates...
-  if (nargin == 9)  &&  (nc > 0)
+  if (nargin == 8)  &&  (nc > 0)
     np = dim-nc;
     U(1:np,1:n_obs) = 0;
     for kk = 1:n
