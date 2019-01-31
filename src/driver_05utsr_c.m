@@ -5,12 +5,19 @@
 % License, v. 2.0. If a copy of the MPL was not distributed with this
 % file, You can obtain one at http://mozilla.org/MPL/2.0/.
 %
-
-%
 % Simple wiffle ball in a room trajectory
 %
-% Square root unscented Kalman and a covariance ananalysis run given
-% a reference trajectory.  See driver_05utsr.m
+% The Square root unscented Kalman (SRUKF) is used to track the location
+% of a ballistic trajectory given range only observations.  The true
+% trajectory is subject to drag while the filter model is not.  The filter
+% compensates via process noise.  Observation model bias is present by
+% perturbing the position of each range tracker.  This bias is treated as
+% a consider parameter by the SRUKF via adding it to an augmented state
+% vector while ensuring the consider parameter state and covariance remain
+% constant during the estimation process.
+%
+% The true trajectory is also used to demonstrate the use of the (SR)UKF
+% as a covariance analysis tool given a reference trajectory.
 %
 % Kurt Motekew  2019/01/27
 %
@@ -19,7 +26,7 @@ close all;
 clear;
 
 %
-% Global Variable
+% Global Variable - enable drag
 %
 
 global global_b;
@@ -38,7 +45,7 @@ x0 = [0.35 0.25 .25 0.2  0.2  1]';
 blen = 1;
 sblen = .001*blen;                          % .1% of total distance for tracker
 SigmaBlen = sblen*sblen;
-ny = 3;
+nci = 3;
 tkrs = [                                    % uncertainty
          0       0       blen ;
          blen    0       blen ;
@@ -75,14 +82,15 @@ view([70 20]);
 % Create simulated range measurements
 %
 
-  % Bias tracker locations along each axis - constant for each trajectory
+  % Bias tracker locations along each axis - constant for each simulation
+  % (duration of the trajectory) but different for each tracker
 tkr_deltas = sblen*randn(3,ntkrs);
   % Vectors of measurement sets.  Columns at different times
-z = zeros(ntkrs,nsets);
+y = zeros(ntkrs,nsets);
 for ii = 1:nsets
   for jj = 1:ntkrs
     svec = x_true(1:3,ii) - (tkrs(:,jj) + tkr_deltas(:,jj));
-    z(jj,ii) = norm(svec) + srng*randn;
+    y(jj,ii) = norm(svec) + srng*randn;
   end
 end
 
@@ -94,30 +102,21 @@ ninit = 3;                                  % Number of initial batch estimates
 x_0 = zeros(3, ninit);                      % Position vectors
 P_0(3,3,ninit) = 0;                         % Position covariances
 for ii = 1:ninit
-  [x_0(:,ii), P_0(:,:,ii), ~] = box_locate(tkrs, z(:,ii)', W);
+  [x_0(:,ii), P_0(:,:,ii), ~] = box_locate(tkrs, y(:,ii)', W);
 end
 [vel, SigmaV] = traj_pos2vel(dt, x_0(:,1),  P_0(:,:,1),...
                                  x_0(:,2),  P_0(:,:,2),...
                                  x_0(:,3),  P_0(:,:,3));
 
-  % Number of filtered outputs will be the initial batch derived
+  % Number of filtered outputs (x & P) will be the initial batch derived
   % estimate plus the remaining number of observations
 nfilt = nsets - ninit + 1;
-x = zeros(6,nfilt);
-P = zeros(6,6,nfilt);
-x(:,1) = [x_0(:,ninit) ; vel]; 
-P(1:3,1:3,1) = P_0(:,:,3);
-P(4:6,4:6,1) = SigmaV;
+x_hat0 = [x_0(:,ninit) ; vel]; 
+P_hat0(4:6,4:6) = SigmaV;
+P_hat0(1:3,1:3) = P_0(:,:,ninit);
   % Subset of full obs for filtering
 filt_ndxoff = ninit - 1;
 filt_rng = ninit:(filt_ndxoff + nfilt);
-
-  %
-  % 'a priori' estimate and covariance to prime filters
-  %
-
-x_hat0 = x(:,1);                            % 'a priori' estimate and
-P_hat0 = P(:,:,1);                          % covariance
 
   %
   % Square Root Unscented Kalman filter with augmented state
@@ -125,29 +124,30 @@ P_hat0 = P(:,:,1);                          % covariance
 
 x_hat = x_hat0;
 P_hat = P_hat0;
-x = zeros(6,nfilt);                         % Reset stored estimates
-P = zeros(6,6,nfilt);
+x = zeros(6,nfilt);                         % Allocate space for estimates
+P = zeros(6,6,nfilt);                       % and covariance
 x(:,1) = x_hat;                             % Set first estimate to
 P(:,:,1) = P_hat;                           % 'a priori' values
-SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
-SrZ = mth_sqrtm(SigmaZ);
+Py = srng*srng*eye(ntkrs);                  % Observation covariance
+Sy = mth_sqrtm(Py);
 alpha = .69;
 kappa = 0;
 beta = 2;                                   % Gaussian
 
 nx = size(x_hat,1);                         % # solve for params
-nc = ny*ntkrs;                              % # total consider params
+nc = nci*ntkrs;                             % # total consider params
 nx_a = nx + nc;                             % Augmented state vector size
-SigmaXY = zeros(nx,nc);                     % Cross covariance
-SigmaY = SigmaBlen*eye(nc);                 % Fixed consider covariance
+Pxc = zeros(nx,nc);                         % Cross covariance
+Pc = SigmaBlen*eye(nc);                     % Fixed consider covariance
 x_hat_a = zeros(nx_a,1);                    % Augmented state vector
 x_hat_a(1:nx) = x_hat;
 for ii = 1:ntkrs
-  ndx1 = nx + (ii-1)*ny + 1;
+  ndx1 = nx + (ii-1)*nci + 1;
   ndx2 = ndx1 + 2;
   x_hat_a(ndx1:ndx2,1) = tkrs(:,ii);
 end
-P_hat_a = [P_hat SigmaXY ; SigmaXY' SigmaY];
+P_hat_a = [P_hat Pxc ; Pxc' Pc];
+S_hat_a = mth_sqrtm(P_hat_a);
   % Get weights
 [w_m, w_c] = est_ut_sigma_weights(nx_a, alpha, kappa, beta);
 if w_c(1) < 0
@@ -155,9 +155,9 @@ if w_c(1) < 0
   return;
 end
 sr_w_c = sqrt(w_c);
-S_hat_a = mth_sqrtm(P_hat_a);
 tic;
 for ii = 2:nfilt
+    % Propagation step - filter model propagates each sigma vector
   Chi = est_ut_srsigma_vec(x_hat_a, S_hat_a, alpha, kappa);
   dim = size(Chi,1);
   n_sigma_vec = size(Chi, 2);
@@ -168,24 +168,24 @@ for ii = 2:nfilt
     Chi(1:3,kk) = pos;
     Chi(4:6,kk) = vel;
   end
-    % Propagated estimate and covariance
+    % Propagated estimate and covariance - compute process noise contribution
   srQ = 2*global_b;
   G = -[.5*x_hat_a(4:6)*dt ; x_hat_a(4:6)]*dt;
   [x_bar_a, L_bar_a] = est_pred_srukf(Chi, w_m, sr_w_c, [G*srQ ; zeros(nc,1)]);
     % Redraw sigma points to incorporate process noise effects
   Chi = est_ut_srsigma_vec(x_bar_a, L_bar_a, alpha, kappa);
     % Computed sigma vector based obs
-  Z = zeros(ntkrs,n_sigma_vec);
+  Y = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
-    ndx1 = nx + (jj-1)*ny + 1;
+    ndx1 = nx + (jj-1)*nci + 1;
     ndx2 = ndx1 + 2;
     for kk = 1:n_sigma_vec
-      Z(jj,kk) = norm(Chi(1:3,kk) - Chi(ndx1:ndx2,kk));
+      Y(jj,kk) = norm(Chi(1:3,kk) - Chi(ndx1:ndx2,kk));
     end
   end
     % Update estimate based on available observations
-  [x_hat_a, S_hat_a] = est_upd_srukf(x_bar_a, L_bar_a, Chi, w_m, sr_w_c, Z,...
-                                              z(:,ii+filt_ndxoff), SrZ, nc);
+  [x_hat_a, S_hat_a] = est_upd_srukf(x_bar_a, L_bar_a, Chi, w_m, sr_w_c, Y,...
+                                              y(:,ii+filt_ndxoff), Sy, nc);
   S_hat = S_hat_a(1:nx,1:nx);
   P_hat = S_hat*S_hat';
   
@@ -206,25 +206,25 @@ view([70 20]);
 P_hat = P_hat0;
 P = zeros(6,6,nsets);
 P(:,:,1) = P_hat;                           % 'a priori' values
-SigmaZ = srng*srng*eye(ntkrs);              % Observation covariance
-SrZ = mth_sqrtm(SigmaZ);
+Py = srng*srng*eye(ntkrs);              % Observation covariance
+Sy = mth_sqrtm(Py);
 alpha = .69;
 kappa = 0;
 beta = 2;                                   % Gaussian
 
 nx = size(x_hat,1);                         % # solve for params
-nc = ny*ntkrs;                              % # total consider params
+nc = nci*ntkrs;                              % # total consider params
 nx_a = nx + nc;                             % Augmented state vector size
-SigmaXY = zeros(nx,nc);                     % Cross covariance
-SigmaY = SigmaBlen*eye(nc);                 % Fixed consider covariance
+Pxc = zeros(nx,nc);                         % Cross covariance
+Pc = SigmaBlen*eye(nc);                 % Fixed consider covariance
 x_true_a = zeros(nx_a,1);                   % Augmented state vector
 x_true_a(1:nx) = x_hat;
 for ii = 1:ntkrs
-  ndx1 = nx + (ii-1)*ny + 1;
+  ndx1 = nx + (ii-1)*nci + 1;
   ndx2 = ndx1 + 2;
   x_true_a(ndx1:ndx2,1) = tkrs(:,ii);
 end
-P_hat_a = [P_hat SigmaXY ; SigmaXY' SigmaY];
+P_hat_a = [P_hat Pxc ; Pxc' Pc];
   % Get weights
 [w_m, w_c] = est_ut_sigma_weights(nx_a, alpha, kappa, beta);
 if w_c(1) < 0
@@ -253,16 +253,16 @@ for ii = 2:nsets
     % Redraw sigma points to incorporate process noise effects
   Chi = est_ut_srsigma_vec(x_true_a, L_bar_a, alpha, kappa);
     % Computed sigma vector based obs
-  Z = zeros(ntkrs,n_sigma_vec);
+  Y = zeros(ntkrs,n_sigma_vec);
   for jj = 1:ntkrs
-    ndx1 = nx + (jj-1)*ny + 1;
+    ndx1 = nx + (jj-1)*nci + 1;
     ndx2 = ndx1 + 2;
     for kk = 1:n_sigma_vec
-      Z(jj,kk) = norm(Chi(1:3,kk) - Chi(ndx1:ndx2,kk));
+      Y(jj,kk) = norm(Chi(1:3,kk) - Chi(ndx1:ndx2,kk));
     end
   end
     % Update estimate based on available observations
-  S_hat_a = est_upd_srukf_cov(x_true_a, L_bar_a, Chi, w_m, sr_w_c, Z, SrZ, nc);
+  S_hat_a = est_upd_srukf_cov(x_true_a, L_bar_a, Chi, w_m, sr_w_c, Y, Sy, nc);
   S_hat = S_hat_a(1:nx,1:nx);
   P_hat = S_hat*S_hat';
   
@@ -273,6 +273,6 @@ cov_plot('SRUKF', t, P);
 
 
 fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
-fprintf('\n Covariance Time:\t\t%1.4f seconds', srukfc_time);
+fprintf('\n Covariance:\t\t%1.4f seconds', srukfc_time);
 fprintf('\n');
 

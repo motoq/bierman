@@ -210,3 +210,11 @@ the Schmidt Kalman and SRIF while reporting realistic estimate covariance.
 If one can spare the extra CPU cycles, it is the way to go.
 ```
 
+driver_05utsr_c.m
+```
+Illustrates covariance analysis given a reference trajectory for the (SR)UKF
+method.  Also, focuses on the (SR)UKF vs. other UT examples.  Since only
+the UT form of the Kalman was used for this example, different notation was
+used for the driver script, that is more consistent with papers on the
+topic of the (SR)UKF method.
+```
