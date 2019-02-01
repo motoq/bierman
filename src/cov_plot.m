@@ -1,4 +1,4 @@
-function cov_plot(title_hdr, t, SigmaX)
+function [phandle, vhandle] = cov_plot(title_hdr, t, SigmaX)
 % COV_PLOT plots position and velocity 95% covariance.
 %
 %-----------------------------------------------------------------------
@@ -14,6 +14,10 @@ function cov_plot(title_hdr, t, SigmaX)
 %   t           Array of times
 %   SigmaX      State covariance, [6x6xN]
 %
+% Return:
+%   phandle  Handle of the position figure
+%   vhandle  Handle of the velocity figure
+%
 % Author:  Kurt Motekew    20180321
 %
 
@@ -22,7 +26,8 @@ function cov_plot(title_hdr, t, SigmaX)
   SigmaX = SF95_3D*SF95_3D*SigmaX;
 
     % Position
-  figure; hold on;
+  phandle = figure;
+  hold on;
   plot(t, sqrt(squeeze(SigmaX(1,1,:))), 'r-',...
        t, sqrt(squeeze(SigmaX(2,2,:))), 'g-',...
        t, sqrt(squeeze(SigmaX(3,3,:))), 'b-');
@@ -32,7 +37,8 @@ function cov_plot(title_hdr, t, SigmaX)
   title(strcat(title_hdr, ' 95% Position Error Bounds'));
 
     % Velocity
-  figure; hold on;
+  vhandle = figure;
+  hold on;
   plot(t, sqrt(squeeze(SigmaX(4,4,:))), 'r-',...
        t, sqrt(squeeze(SigmaX(5,5,:))), 'g-',...
        t, sqrt(squeeze(SigmaX(6,6,:))), 'b-');

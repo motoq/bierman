@@ -1,4 +1,4 @@
-function res_plot(title_hdr,t, x, xhat, SigmaX)
+function [phandle, vhandle] = res_plot(title_hdr,t, x, xhat, SigmaX)
 % RES_PLOT plots position and velocity error along with the associated 95%
 % covariance.
 %
@@ -17,6 +17,10 @@ function res_plot(title_hdr,t, x, xhat, SigmaX)
 %   xhat        Estimated position & velocity, [6xN]
 %   SigmaX      xhat covariance, [6x6xN]
 %
+% Return:
+%   phandle  Handle of the position figure
+%   vhandle  Handle of the velocity figure
+%
 % Author:  Kurt Motekew    20160816
 %
 
@@ -26,7 +30,8 @@ function res_plot(title_hdr,t, x, xhat, SigmaX)
   residual = abs(x - xhat);
 
     % Position
-  figure; hold on;
+  phandle = figure;
+  hold on;
   plot(t, residual(1,:), 'ro', t, residual(2,:), 'go', t, residual(3,:), 'bo');
   legend('x', 'y', 'z');
   plot(t, sqrt(squeeze(SigmaX(1,1,:))), 'r-',...
@@ -37,7 +42,8 @@ function res_plot(title_hdr,t, x, xhat, SigmaX)
   title(strcat(title_hdr, ' Estimated Position Error and 95% Error Bounds'));
 
     % Velocity
-  figure; hold on;
+  vhandle = figure;
+  hold on;
   plot(t, residual(4,:), 'ro', t, residual(5,:), 'go', t, residual(6,:), 'bo');
   legend('x', 'y', 'z');
   plot(t, sqrt(squeeze(SigmaX(4,4,:))), 'r-',...

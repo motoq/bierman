@@ -193,7 +193,8 @@ for ii = 2:nfilt
   P(:,:,ii) = P_hat;
 end
 srukf_time = toc;
-res_plot('SRUKF', t(filt_rng), x_true(:,filt_rng), x, P);
+[traj_p_hndl, traj_v_hndl] = res_plot('SRUKF', t(filt_rng),...
+                                               x_true(:,filt_rng), x, P);
   % Plot geometry
 traj_plot(x, x_true(:,filt_rng), tkrs, blen);
 title('SRUKF Trajectory');
@@ -269,8 +270,20 @@ for ii = 2:nsets
   P(:,:,ii) = P_hat;
 end
 srukfc_time = toc;
-cov_plot('SRUKF', t, P);
-
+[cov_p_hndl, cov_v_hndl] = cov_plot('SRUKF', t, P);
+  % Set covariance plot limits to match trajectory limits
+figure(traj_p_hndl);
+xal = xlim;
+yal = ylim;
+figure(cov_p_hndl);
+xlim(xal);
+ylim(yal);
+figure(traj_v_hndl);
+xal = xlim;
+yal = ylim;
+figure(cov_v_hndl);
+xlim(xal);
+ylim(yal);
 
 fprintf('\n SRUKF Time:\t\t%1.4f seconds', srukf_time);
 fprintf('\n Covariance:\t\t%1.4f seconds', srukfc_time);
