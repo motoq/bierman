@@ -26,6 +26,11 @@ function [x, U, D] = est_upd_ud(x, U, D, a, delta, r)
 %   D   Updated D, [NxN]
 %
 % Kurt Motekew   2016/08/03
+%                2019/09/30  Thanks to happain on GitHub for finding
+%                            an error I made initializing 'b'.  This
+%                            clears up a prior discrepancy between
+%                            the SRIF, Kalman, and UD results that
+%                            could be seen in driver_04d.m
 %
 %
 % Ref:  G. J. Bierman, Factorization Methods for
@@ -35,8 +40,9 @@ function [x, U, D] = est_upd_ud(x, U, D, a, delta, r)
 
   n = size(x,1);                                 % Number of solve for
 
+    % b = DU'a, a = U'a, or, more efficiently
   a = U'*a';
-  b = D*U'*a;
+  b = D*a;
   
   alpha = r + b(1)*a(1);
   gamma = 1/alpha;

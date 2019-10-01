@@ -29,7 +29,12 @@ function [x, U, D] = est_pred_ud(x, U, D, Phi, Q, G)
 %   D      Updated D, [nxn]
 %
 % Kurt Motekew   2016/12/14
-%
+%                2019/09/30  Thanks to happain on GitHub for pointing
+%                            out I was populating the diagonal and
+%                            lower portion of U due to an error in the
+%                            range for the 2nd loop.  This error would
+%                            cause issues for any function that didn't
+%                            assume U was upper unit triangular.
 %
 % Ref:  G. J. Bierman, Factorization Methods for
 %       Discrete Sequential Estimation, Dover Publications, Inc.,
@@ -56,7 +61,7 @@ function [x, U, D] = est_pred_ud(x, U, D, Phi, Q, G)
     c = Dtmp*A(:,ii);
     D(ii,ii) = A(:,ii)'*c;
     d = c/D(ii,ii);
-    for jj = 1:n
+    for jj = 1:(ii-1)
       U(jj,ii) = A(:,jj)'*d;
       A(:,jj) = A(:,jj) - U(jj,ii)*A(:,ii);
     end
