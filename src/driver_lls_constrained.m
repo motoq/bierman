@@ -6,7 +6,8 @@ close all;
 % fit to the curve y = a0 + a1*x + a2*exp(x) given an overdetermined
 % system.
 %
-% The constrained fit example locks
+% The constrained fit example locks the endpoints and sets the slope at
+% the first endpoint.
 
 %
 % Define local functions.  For Matlab, move these three functions

@@ -43,6 +43,12 @@ Compares  A WLS solution of the normal equations with one using
 Householder triangularization and QR decomposition.
 ```
 
+driver_lls_constrained.m - detour
+```
+Illustrates constrained LLS via Lagrange multipliers.
+```
+
+
 driver_lls_hhcurvefit.m - detour
 ```
 Illustrates sequential estimation via Householder SRIF for a linear
