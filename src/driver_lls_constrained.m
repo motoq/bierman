@@ -109,7 +109,7 @@ end
 Ac(nc,:) = dydpdx(xcvals(nc));
 
   % Augmented normal equations
-A = [2*Ap'*Ap  Ac' ; Ac zeros(nc, nc)];
+A = [2*(Ap'*Ap)  Ac' ; Ac zeros(nc, nc)];
 yc = [2*Ap'*yvals ; ycvals];
   % Lagrange multipliers are the last three elements of the
   % augmented solve-for parameter vector
