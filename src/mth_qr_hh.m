@@ -1,6 +1,6 @@
-function Q = mth_hh_q(A)
-% MTH_HH_Q Generates the Q portion of the full QR decomposition of a
-% matrix via Householder transformations.
+function [Q, A] = mth_qr_hh(A)
+% MTH_QR_HH Generates performs full QR factorization via Householder
+% transformations.
 %
 %-----------------------------------------------------------------------
 % Copyright 2022 Kurt Motekew
@@ -15,6 +15,8 @@ function Q = mth_hh_q(A)
 %
 % Return
 %  Q  Orthonormal matrix such that Q'A is upper triangular
+%  A  Upper triangular matrix replacing the original A such that
+%     A(old) = QA(returned)
 %
 % Kurt Motekew  2022/11/10
 %
